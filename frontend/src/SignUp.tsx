@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import bgImage from "../assests/SignUpbg.jpeg";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -9,16 +10,37 @@ const SignUp = () => {
   const [address, setAddress] = useState("");
   const [googleMapLink, setGoogleMapLink] = useState("");
 
+  const [nameError, setNameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [mobileError, setMobileError] = useState("");
-  const [nameError, setNameError] = useState("");
-  const [emailError, setEmailError] = useState("");
   const [addressError, setAddressError] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Handle password change
+  // ✅ Only allow letters and spaces in Name
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^A-Za-z\s]/g, ""); 
+    setName(value.trimStart()); 
+    if (!value.trim()) {
+      setNameError("❌ Name is required");
+    } else {
+      setNameError("");
+    }
+  };
+
+  // ✅ Mobile: allow only numbers and show error until 10 digits
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ""); 
+    setMobile(value);
+
+    if (value.length < 10) {
+      setMobileError("❌ Enter a valid 10-digit number");
+    } else {
+      setMobileError("");
+    }
+  };
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setPassword(value);
@@ -39,22 +61,14 @@ const SignUp = () => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     let valid = true;
 
-    // Validate compulsory fields
     if (!name.trim()) {
       setNameError("❌ Name is required");
       valid = false;
     } else setNameError("");
-
-    if (!email.trim()) {
-      setEmailError("❌ Email is required");
-      valid = false;
-    } else setEmailError("");
 
     if (!mobile || mobile.length !== 10) {
       setMobileError("❌ Enter a valid 10-digit number");
@@ -83,7 +97,6 @@ const SignUp = () => {
 
     if (!valid) return;
 
-    // All validations passed
     alert(
       `✅ SignUp Successful!\nGoogle Maps Link: ${
         googleMapLink || "Not Provided"
@@ -92,10 +105,18 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-green-500 relative p-4 overflow-x-hidden overflow-y-auto">
-      <div className="w-full max-w-md p-8 rounded-xl bg-white/25 backdrop-blur-md shadow-2xl hover:bg-white/30 transition">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="w-full max-w-md p-8 rounded-xl bg-white/65 shadow-2xl max-h-[700px] hover:bg-white/70 transition-smooth">
+        
         {/* User Icon */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-3">
           <div className="bg-green-600 p-5 rounded-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -114,28 +135,28 @@ const SignUp = () => {
           </div>
         </div>
 
-        <h2 className="text-center text-2xl font-serif uppercase tracking-widest text-black mb-12">
+        <h2 className="text-center text-2xl font-serif uppercase tracking-widest text-black mb-3">
           Customer SignUp
         </h2>
 
         {/* Name */}
-        <div className="border-b border-black mb-4">
+        <div className="border-b border-black mb-2">
           <input
             type="text"
             placeholder="Enter your name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={handleNameChange}
             className="w-full bg-transparent outline-none text-black placeholder-black py-2"
           />
         </div>
         {nameError && <p className="text-red-600 text-sm mb-2">{nameError}</p>}
 
-        {/* Email + Mobile side by side */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Email + Mobile */}
+        <div className="grid grid-cols-2 gap-4 mb-2">
           <div className="border-b border-black">
             <input
               type="email"
-              placeholder="Email ID"
+              placeholder="Email ID (Optional)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-transparent outline-none text-black placeholder-black py-2"
@@ -146,20 +167,16 @@ const SignUp = () => {
               type="tel"
               placeholder="Mobile Number"
               value={mobile}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, "");
-                setMobile(value);
-              }}
+              onChange={handleMobileChange}
               maxLength={10}
               className="w-full bg-transparent outline-none text-black placeholder-black py-2"
             />
           </div>
         </div>
         {mobileError && <p className="text-red-600 text-sm mb-2">{mobileError}</p>}
-        {emailError && <p className="text-red-600 text-sm mb-2">{emailError}</p>}
 
-        {/* Password + Confirm Password side by side */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Password + Confirm Password */}
+        <div className="grid grid-cols-2 gap-4 mb-1">
           <div className="relative border-b border-black">
             <input
               type={showPassword ? "text" : "password"}
@@ -173,14 +190,9 @@ const SignUp = () => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-2 top-2/4 -translate-y-2/4 text-black"
             >
-              {showPassword ? (
-                <span>👁️</span>
-              ) : (
-                <span>🙈</span>
-              )}
+              {showPassword ? "👁️" : "🙈"}
             </button>
           </div>
-
           <div className="relative border-b border-black">
             <input
               type={showConfirmPassword ? "text" : "password"}
@@ -194,18 +206,14 @@ const SignUp = () => {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-2 top-2/4 -translate-y-2/4 text-black"
             >
-              {showConfirmPassword ? (
-                <span>👁️</span>
-              ) : (
-                <span>🙈</span>
-              )}
+              {showConfirmPassword ? "👁️" : "🙈"}
             </button>
           </div>
         </div>
         {passwordError && <p className="text-red-600 text-sm mb-2">{passwordError}</p>}
 
         {/* Address */}
-        <div className="border-b border-black mb-4">
+        <div className="border-b border-black mb-2">
           <textarea
             placeholder="Enter your address"
             value={address}
@@ -216,8 +224,8 @@ const SignUp = () => {
         </div>
         {addressError && <p className="text-red-600 text-sm mb-2">{addressError}</p>}
 
-        {/* Optional Google Maps Link */}
-        <div className="border-b border-black mb-6">
+        {/* Google Maps Link */}
+        <div className="border-b border-black mb-5">
           <input
             type="url"
             placeholder="Google Maps Link (Optional)"
@@ -227,7 +235,7 @@ const SignUp = () => {
           />
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           onClick={handleSubmit}

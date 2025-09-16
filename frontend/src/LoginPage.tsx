@@ -1,10 +1,13 @@
 // src/LoginPage.tsx
 import React, { useState } from "react";
+import { Link } from "react-router-dom"; // 👈 import Link
+import bgImage from "../assests/LoginPage.jpg"; // 👈 make sure your path is correct (assets not assests)
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // toggle state
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -12,10 +15,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#9b5de5] via-[#f15bb5] to-[#ff6f61]">
-      <div className="bg-white/20 backdrop-blur-lg rounded-2xl p-8 w-[380px] shadow-2xl">
+    <div
+      className="flex items-center justify-center min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: `url(${bgImage})` }} // 👈 background applied
+    >
+      <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-8 w-[380px] shadow-2xl hover:bg-black/40">
         {/* User Icon */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-3">
           <div className="bg-white/30 p-4 rounded-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -35,7 +41,7 @@ const LoginPage = () => {
         </div>
 
         {/* Title */}
-        <h2 className="text-white text-center text-2xl font-bold mb-6">
+        <h2 className="text-white text-center text-2xl font-bold mb-5 font-serif uppercase text-1xl">
           Customer Login
         </h2>
 
@@ -83,13 +89,53 @@ const LoginPage = () => {
               />
             </svg>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="flex-1 bg-transparent text-white placeholder-white/70 outline-none"
               required
             />
+            {/* Eye Icon */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="ml-2 text-white flex items-center"
+            >
+              {showPassword ? (
+                // Eye Off
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 3l18 18M10.5 10.5a3 3 0 014 4m1.5 1.5c-1.5 1.5-4.5 4.5-7.5 4.5S3 18 3 12s4.5-9 9-9c3 0 6 3 6 3"
+                  />
+                </svg>
+              ) : (
+                // Eye
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 5c7.5 0 9 7 9 7s-1.5 7-9 7-9-7-9-7 1.5-7 9-7zM12 12a3 3 0 100-6 3 3 0 000 6z"
+                  />
+                </svg>
+              )}
+            </button>
           </div>
 
           {/* Options */}
@@ -103,7 +149,10 @@ const LoginPage = () => {
               />
               <span>Remember me</span>
             </label>
-            <a href="#" className="hover:underline">
+            <a
+              href="#forgot-password"
+              className=" text-blue-500 hover:underline"
+            >
               Forgot Password?
             </a>
           </div>
@@ -111,14 +160,22 @@ const LoginPage = () => {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full py-2 bg-[#9b5de5] hover:bg-[#7a3dc2] text-white font-semibold rounded-lg transition"
+            className="w-full py-2 bg-[#9b5de5] hover:bg-orange-500 text-white font-semibold rounded-lg transition"
           >
             LOGIN
           </button>
+
+          {/* Signup Link */}
+          <p className="text-center text-white text-sm mt-4">
+            Don’t have an account?{" "}
+            <Link to="/signup" className="text-blue-400 hover:underline">
+              Sign Up
+            </Link>
+          </p>
         </form>
       </div>
     </div>
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

@@ -1,13 +1,18 @@
-import './App.css'
-// import LoginPage from './LoginPage'
-import SignUp from './SignUp'
-function App() {
-  return (
-    <>
-      {/* <LoginPage /> */}
-      <SignUp />
-    </>
-  )
-}
+// src/App.tsx
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import LoginPage from "./LoginPage";
+import SignUp from "./SignUp";
 
-export default App
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUp />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;

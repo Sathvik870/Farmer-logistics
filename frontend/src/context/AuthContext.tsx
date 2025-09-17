@@ -1,42 +1,56 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import { createContext, useState, useContext, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import api from '../api';
 
 interface User {
-  userId: number;
+  id: number;
   username: string;
-  role: string;
+  role: 'admin' | 'superadmin';
 }
 
 interface AuthContextType {
+  isAuthenticated: boolean;
   user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isLoading: boolean;
+  login: (userData: User) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('access_token='));
-    
-    if (token) {
+    const checkAuthStatus = async () => {
       try {
-        const decoded = jwtDecode<{ sub: number; username: string; role: string }>(token.split('=')[1]);
-        setUser({ userId: decoded.sub, username: decoded.username, role: decoded.role });
+        const response = await api.get<User>('/api/users/profile');
+        setUser(response.data);
       } catch (error) {
-        console.error("Invalid token found in cookie", error);
         setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    
-    setIsLoading(false);
+    };
+    checkAuthStatus();
   }, []);
 
+  const login = (userData: User) => {
+    setUser(userData);
+  };
+
+  const logout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import bgImage from "../assests/SignUpbg.jpeg";
+import bgImage from "../assests/LoginPage.jpg";
+import UesrIcon from'../assests/UserIcon.jpg'
 
-const SignUp = () => {
+const CustomerSignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
@@ -113,29 +114,14 @@ const SignUp = () => {
         backgroundPosition: "center",
       }}
     >
-      <div className="w-full max-w-md p-8 rounded-xl bg-white/65 shadow-2xl max-h-[700px] hover:bg-white/70 transition-smooth">
+      <div className="w-full max-w-md p-8 rounded-xl bg-black/20 backdrop-blur-lg shadow-2xl max-h-[700px] hover:bg-black/40">
         
         {/* User Icon */}
         <div className="flex justify-center mb-3">
-          <div className="bg-green-600 p-5 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-14 w-14 text-black"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
+          <img src={UesrIcon} alt="Site Icon" className="rounded-full h-25 w-25"/>
         </div>
 
-        <h2 className="text-center text-2xl font-serif uppercase tracking-widest text-black mb-3">
+        <h2 className="text-center text-2xl font-serif uppercase tracking-widest text-white mb-3">
           Customer SignUp
         </h2>
 
@@ -146,7 +132,7 @@ const SignUp = () => {
             placeholder="Enter your name"
             value={name}
             onChange={handleNameChange}
-            className="w-full bg-transparent outline-none text-black placeholder-black py-2"
+            className="w-full bg-transparent outline-none text-white placeholder-white py-2"
           />
         </div>
         {nameError && <p className="text-red-600 text-sm mb-2">{nameError}</p>}
@@ -159,7 +145,7 @@ const SignUp = () => {
               placeholder="Email ID (Optional)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-transparent outline-none text-black placeholder-black py-2"
+              className="w-full bg-transparent outline-none text-white placeholder-white py-2"
             />
           </div>
           <div className="border-b border-black">
@@ -169,7 +155,7 @@ const SignUp = () => {
               value={mobile}
               onChange={handleMobileChange}
               maxLength={10}
-              className="w-full bg-transparent outline-none text-black placeholder-black py-2"
+              className="w-full bg-transparent outline-none text-white placeholder-white py-2"
             />
           </div>
         </div>
@@ -183,12 +169,12 @@ const SignUp = () => {
               placeholder="Password"
               value={password}
               onChange={handlePasswordChange}
-              className="w-full bg-transparent outline-none text-black placeholder-black py-2 pr-10"
+              className="w-full bg-transparent outline-none text-white placeholder-white py-2 pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-2/4 -translate-y-2/4 text-black"
+              className="absolute right-2 top-2/4 -translate-y-2/4 text-white"
             >
               {showPassword ? "👁️" : "🙈"}
             </button>
@@ -199,12 +185,12 @@ const SignUp = () => {
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={handleConfirmPasswordChange}
-              className="w-full bg-transparent outline-none text-black placeholder-black py-2 pr-10"
+              className="w-full bg-transparent outline-none text-white placeholder-white py-2 pr-10"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-2 top-2/4 -translate-y-2/4 text-black"
+              className="absolute right-2 top-2/4 -translate-y-2/4 text-whiite"
             >
               {showConfirmPassword ? "👁️" : "🙈"}
             </button>
@@ -218,7 +204,7 @@ const SignUp = () => {
             placeholder="Enter your address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="w-full bg-transparent outline-none text-black placeholder-black py-2 resize-none"
+            className="w-full bg-transparent outline-none text-white placeholder-white py-2 resize-none"
             rows={3}
           />
         </div>
@@ -231,7 +217,7 @@ const SignUp = () => {
             placeholder="Google Maps Link (Optional)"
             value={googleMapLink}
             onChange={(e) => setGoogleMapLink(e.target.value)}
-            className="w-full bg-transparent outline-none text-black placeholder-black py-2"
+            className="w-full bg-transparent outline-none text-white placeholder-white py-2"
           />
         </div>
 
@@ -248,4 +234,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default CustomerSignUp;

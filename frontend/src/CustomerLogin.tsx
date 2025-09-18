@@ -1,9 +1,9 @@
-// src/LoginPage.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom"; // 👈 import Link
 import bgImage from "../assests/LoginPage.jpg"; // 👈 make sure your path is correct (assets not assests)
+import UesrIcon from'../assests/UserIcon.jpg'
 
-const LoginPage = () => {
+const CustomerLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -22,22 +22,7 @@ const LoginPage = () => {
       <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-8 w-[380px] shadow-2xl hover:bg-black/40">
         {/* User Icon */}
         <div className="flex justify-center mb-3">
-          <div className="bg-white/30 p-4 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-12 h-12 text-white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
+          <img src={UesrIcon} alt="Site Icon" className="rounded-full h-25 w-25"/>
         </div>
 
         {/* Title */}
@@ -150,11 +135,17 @@ const LoginPage = () => {
               <span>Remember me</span>
             </label>
             <a
-              href="#forgot-password"
-              className=" text-blue-500 hover:underline"
+              href="forgot-password"
+              className=" text-blue-500 font-italic hover:underline"
             >
+               <Link to="/forgot-password" className="text-blue-500 hover:underline">
               Forgot Password?
+            </Link>
+          
             </a>
+            
+           
+           
           </div>
 
           {/* Login Button */}
@@ -178,4 +169,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default CustomerLogin;

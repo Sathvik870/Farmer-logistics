@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { FormEvent } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 
@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { login } = useAuth();
+  
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -35,7 +36,6 @@ const Login: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-900">
-      
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
         <h2 className="text-3xl font-bold text-center">
           Secure Login
@@ -92,6 +92,18 @@ const Login: React.FC = () => {
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link 
+              to="/signup" 
+              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

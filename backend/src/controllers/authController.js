@@ -4,9 +4,9 @@ const jwt = require('jsonwebtoken');
 const logger = require('../logger');
 
 exports.signup = async (req, res) => {
-  const { username, password, email, phone_number, role } = req.body;
+  const { first_name, last_name,username, password, email, phone_number, role } = req.body;
 
-  if (!username || !password || !email || !phone_number || !role) {
+  if (!first_name || !last_name  || !username || !password || !email || !phone_number || !role) {
     logger.warn(`[AUTH] Signup failed: Missing required fields.`);
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
@@ -26,11 +26,11 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUserQuery = `
-      INSERT INTO users (username, password, email, phone_number, role) 
-      VALUES ($1, $2, $3, $4, $5) 
-      RETURNING id, username, email, role, created_at, authorized;
+      INSERT INTO users (first_name, last_name,username, password, email, phone_number, role) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      RETURNING  id, first_name, last_name, username, email, role, created_at, authorized;
     `;
-    const { rows } = await db.query(newUserQuery, [username, hashedPassword, email, phone_number, role]);
+    const { rows } = await db.query(newUserQuery, [first_name, last_name, username, hashedPassword, email, phone_number, role]);
     
     logger.info(`[AUTH] New user created: ${username}. Awaiting admin authorization.`);
     res.status(201).json({

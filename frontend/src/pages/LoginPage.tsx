@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import type { FormEvent } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import api from '../api';
-
+import React, { useState } from "react";
+import type { FormEvent } from "react";
+import { HiUser, HiLockClosed, HiEye, HiEyeOff } from "react-icons/hi";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import api from "../api";
+import loginImage from "../assets/login-page-bg.png";
+import logo from "../assets/main-logo.jpg";
 const Login: React.FC = () => {
-  const [username, setUsername] = useState<string>('');
-  const navigate = useNavigate(); 
-  const [password, setPassword] = useState<string>('');
+  const navigate = useNavigate();
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { login } = useAuth();
@@ -18,80 +21,119 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const response = await api.post('/api/auth/login', { username, password });
-      login(response.data); 
-      navigate('/home');
+      const response = await api.post("/api/auth/login", {
+        username,
+        password,
+      });
+      login(response.data);
+      navigate("/home");
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.message || 'An unexpected error occurred.');
+        setError(err.response.data.message || "An unexpected error occurred.");
       } else {
-        setError('Failed to connect to the server.');
+        setError("Failed to connect to the server.");
       }
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-900">
-      
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-3xl font-bold text-center">
-          Secure Login
-        </h2>
+    <div className="flex w-full min-h-screen bg-[#f7f7f7]">
+      <div className="hidden lg:flex w-3/5 items-center justify-center bg-gray-100">
+        <img
+          src={loginImage}
+          alt="Login Illustration"
+          className="object-cover w-full h-full"
+        />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="p-3 text-sm text-red-800 bg-red-100 border border-red-300 rounded-md">
-              {error}
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+              <img
+                src={logo}
+                alt="Logo"
+                className="object-cover w-full h-full"
+              />
             </div>
-          )}
-
-          <div>
-            <label 
-              htmlFor="username" 
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-            />
           </div>
 
-          <div>
-            <label 
-              htmlFor="password" 
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-            />
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-black">Welcome Admin!</h2>
           </div>
 
-          <button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full py-3 px-4 font-semibold text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {error && (
+              <div className="p-3 text-lg text-center text-red-800 bg-red-100 border border-red-300 rounded-md">
+                {error}
+              </div>
+            )}
+
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <HiUser className="h-6 w-6 text-black" />
+              </span>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+                required
+                disabled={isLoading}
+                className="peer w-full  text-xl bg-transparent border-b-2 placeholder-black border-gray-300 py-3 pl-10 pr-4 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-1000 ease-in-out"
+              />
+            </div>
+
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <HiLockClosed className="h-6 w-6 text-black text-2xl" />
+              </span>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+                disabled={isLoading}
+                className="peer w-full text-xl bg-transparent border-b-2 placeholder-black border-gray-300 py-3 pl-10 pr-4 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-1000 ease-in-out"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <HiEyeOff className="h-6 w-6 text-black" />
+                ) : (
+                  <HiEye className="h-6 w-6 text-black" />
+                )}
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex gap-3 text-xl cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 hover:text-white hover:border-[#144a31] hover:[#387c40] hover:to-[#144a31] w-full justify-center items-center"
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          <p className="text-center text-lg text-black">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="text-lg text-[#387c40] hover:text-[#144a31]"
+            >
+              Sign Up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff } from "react-icons/hi";
 import axios from "axios";
@@ -9,12 +9,17 @@ import loginImage from "../assets/login-page-bg.png";
 import logo from "../assets/main-logo.jpg";
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { login } = useAuth();
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -26,7 +31,7 @@ const Login: React.FC = () => {
         password,
       });
       login(response.data);
-      navigate("/home");
+      navigate("/dashboard");
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "An unexpected error occurred.");

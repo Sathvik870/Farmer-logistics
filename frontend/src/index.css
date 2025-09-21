@@ -45,3 +45,26 @@
   font-weight: 800;
   font-style: normal;
 }
+
+.custom-ag-theme {
+    --ag-font-size: 15px;
+
+    --ag-cell-font-size: 15px;
+
+    --ag-border-width: 2px;
+    --ag-border-color: #387c40;
+    --ag-grid-border-radius: 8px;
+
+    --ag-header-background-color: #387c40;
+    --ag-header-foreground-color: #ffffff;
+    --ag-header-cell-text-color: #ffffff;
+
+    --ag-row-hover-color: #144a3110;
+    --ag-row-height: 60px;
+    --ag-background-color: #f7f7f7;
+    --ag-row-background-color: #ffffff;
+    --ag-odd-row-background-color: #f7f7f7;
+    --ag-primary-color: #387c40;
+
+    --ag-cell-horizontal-padding: 1.5rem;
+}

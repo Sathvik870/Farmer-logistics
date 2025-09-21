@@ -7,6 +7,8 @@ const cookieParser = require('cookie-parser');
 const logger = require('./src/logger');
 const authRoutes = require('./src/routes/authRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const productRoutes = require('./src/routes/productRoutes');
+
 dotenv.config();
 
 const app = express();
@@ -14,7 +16,8 @@ const PORT = process.env.PORT || 3000;
 
 const allowedOrigins = [
   'http://localhost:5173',
-  `http://${findLocalIp()}:5173`
+  `http://${findLocalIp()}:5173`,
+  'https://farmer-logistics.netlify.app'
 ];
 
 app.use(cors({
@@ -34,6 +37,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');

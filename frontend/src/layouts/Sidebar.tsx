@@ -1,4 +1,3 @@
-// src/layouts/Sidebar.tsx
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,7 +18,7 @@ interface SidebarProps {
 
 const mainLinks = [
   { name: "Dashboard", path: "/dashboard", icon: HiOutlineHome },
-  { name: 'Products', path: '/products', icon: HiOutlineShoppingBag },
+  { name: "Products", path: "/products", icon: HiOutlineShoppingBag },
   {
     name: "Purchase orders",
     path: "/purchase-orders",

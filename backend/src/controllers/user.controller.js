@@ -1,5 +1,5 @@
-const db = require('../db');
-const logger = require('../logger');
+const db = require('../config/db');
+const logger = require('../config/logger');
 
 exports.getUserProfile = async (req, res) => {
     const userId = req.user.userId;

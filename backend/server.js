@@ -4,10 +4,10 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const os = require('os');
 const cookieParser = require('cookie-parser');
-const logger = require('./src/logger');
-const authRoutes = require('./src/routes/authRoutes');
-const userRoutes = require('./src/routes/userRoutes');
-const productRoutes = require('./src/routes/productRoutes');
+const logger = require('./src/config/logger');
+const authRoutes = require('./src/routes/auth.routes');
+const userRoutes = require('./src/routes/user.routes');
+const productRoutes = require('./src/routes/product.routes');
 
 dotenv.config();
 

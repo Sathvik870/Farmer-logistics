@@ -1,7 +1,7 @@
-const db = require('../db');
+const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const logger = require('../logger');
+const logger = require('../config/logger');
 
 exports.signup = async (req, res) => {
   const { first_name, last_name,username, password, email, phone_number, role } = req.body;

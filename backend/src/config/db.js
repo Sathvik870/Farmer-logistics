@@ -3,7 +3,7 @@ require("dotenv").config();
 const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
-const caCertPath = path.resolve(__dirname, '..', 'certs', 'ca.pem');
+const caCertPath = path.resolve(__dirname, '../../', 'certs', 'ca.pem');
 
 logger.info(`[DB] Attempting to read Aiven CA certificate from the root path`);
 

@@ -1,5 +1,5 @@
-const db = require('../db'); 
-const logger = require('../logger'); 
+const db = require('../config/db'); 
+const logger = require('../config/logger'); 
 
 exports.getAllProducts = async (req, res) => {
   logger.info('[PRODUCT] Request received to fetch all products.');

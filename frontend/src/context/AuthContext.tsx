@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const response = await api.get<User>('/api/users/profile');
         setUser(response.data);
       } catch (error) {
+        console.error("Failed to fetch user profile", error);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -56,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

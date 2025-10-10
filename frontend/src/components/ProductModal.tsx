@@ -1,40 +1,37 @@
+import { useAlert } from '../context/AlertContext';
+import api from "../api";
 import React, { useState, useEffect } from "react";
-import type { Product } from "../pages/ProductsPage";
+import type { ProductWithImage as Product } from "../pages/ProductsPage";
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (product: Partial<Product>, imageFile: File | null) => Promise<void>;
+  onSaveSuccess: () => void; 
   productToEdit: Product | null;
 }
 
 const categoryOptions = ["Fruits", "Vegetables", "Dairy", "Grains"];
 const unitOptions = ["Kilo gram", "grams", "packet", "dozen", "box"];
 
-const labelStyle = "block text-lg font-medium text-black mb-1 text-left";
+const labelStyle = "block text-base text-black mb-1 text-left";
 const inputStyle =
-  "w-full text-lg bg-transparent border-b-2 placeholder-gray-500 border-gray-300 py-2 px-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-300 ease-in-out";
+  "w-full text-base bg-transparent border-b-2 placeholder-gray-500 border-gray-300 py-2 px-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-300 ease-in-out";
 const primaryButtonStyle =
-  "flex gap-3 text-xl cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center";
+  "flex gap-3 text-base cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center";
 const secondaryButtonStyle =
-  "flex-1 sm:flex-none text-xl cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
+  "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
 
 const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
   onClose,
-  onSave,
+  onSaveSuccess,
   productToEdit,
 }) => {
-  const [formData, setFormData] = useState<Partial<Product>>({
-    name: "",
-    category: categoryOptions[0],
-    description: "",
-    unit: unitOptions[0],
-    price: 0,
-  });
+  const [formData, setFormData] = useState<Partial<Product>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLargePreviewOpen, setIsLargePreviewOpen] = useState(false);
+  const { showAlert } = useAlert();
   useEffect(() => {
     if (productToEdit) {
       setFormData(productToEdit);
@@ -82,31 +79,62 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData, selectedFile);
+    const submissionFormData = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        submissionFormData.append(key, String(value));
+      }
+    });
+    if (selectedFile) {
+      submissionFormData.append('productImage', selectedFile);
+    }
+
+    try {
+      const isEditing = !!productToEdit?.product_id;
+      
+      if (isEditing) {
+        await api.put(`/api/products/${productToEdit.product_id}`, submissionFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        await api.post('/api/products', submissionFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      
+      showAlert(`Product ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
+      onSaveSuccess();
+      onClose();
+
+    } catch (error) {
+      showAlert('Failed to save product.', 'error');
+      console.error(error);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#ffffffbc] bg-opacity-75">
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
-        <h2 className="text-2xl font-bold text-black mb-8 text-center">
-          {productToEdit ? "Edit Product" : "Add New Product"}
-        </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#ffffffe8]">
+      <div className="bg-[#f7f7f7] p-6 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+        <div className="flex-shrink-0">
+          <h2 className="text-2xl font-bold text-black mb-6 text-center">
+            {productToEdit ? "Edit Product" : "Add New Product"}
+          </h2>
 
-        {productToEdit && (
-          <div className="mb-4 text-center">
-            <p className="text-lg text-gray-500">
-              Product Code:{" "}
-              <span className="font-semibold text-black">
-                {productToEdit.product_code}
-              </span>
-            </p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+          {productToEdit && (
+            <div className="mb-4 text-center">
+              <p className="text-lg text-gray-500">
+                Product Code:{" "}
+                <span className="font-semibold text-black">
+                  {productToEdit.product_code}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto space-y-5 pr-4 -mr-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
             <div>
               <label htmlFor="name" className={labelStyle}>
                 Product Name
@@ -114,7 +142,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <input
                 id="name"
                 name="name"
-                value={formData.name}
+                value={formData.name || ''}
                 onChange={handleChange}
                 required
                 className={inputStyle}
@@ -127,7 +155,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <select
                 id="category"
                 name="category"
-                value={formData.category}
+                value={formData.category || ''}
                 onChange={handleChange}
                 className={inputStyle}
               >
@@ -145,7 +173,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <select
                 id="unit"
                 name="unit"
-                value={formData.unit}
+                value={formData.unit || ''}
                 onChange={handleChange}
                 className={inputStyle}
               >
@@ -165,7 +193,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 name="price"
                 type="number"
                 step="0.01"
-                value={formData.price}
+                value={formData.price || 0}
                 onChange={handleChange}
                 required
                 className={inputStyle}
@@ -210,23 +238,23 @@ const ProductModal: React.FC<ProductModalProps> = ({
               rows={2}
             ></textarea>
           </div>
-
-          <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className={secondaryButtonStyle}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={`${primaryButtonStyle} flex-1 sm:flex-none`}
-            >
-              {productToEdit ? "Save Changes" : "Add Product"}
-            </button>
-          </div>
         </form>
+        <div className="flex-shrink-0 flex flex-col sm:flex-row justify-end gap-4 pt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className={secondaryButtonStyle}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className={`${primaryButtonStyle} flex-1 sm:flex-none`}
+          >
+            {productToEdit ? "Save Changes" : "Add Product"}
+          </button>
+        </div>
       </div>
       {isLargePreviewOpen && previewUrl && (
         <div

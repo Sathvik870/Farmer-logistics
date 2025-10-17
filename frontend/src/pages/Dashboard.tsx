@@ -123,7 +123,7 @@ const dailyOrdersData = [
 const Dashboard: React.FC = () => {
   return (
     <div>
-      <h1 className="text-4xl font-bold text-gray-800 mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {allStatCards.map((card, index) => (
           <div
@@ -134,7 +134,7 @@ const Dashboard: React.FC = () => {
               {card.icon}
             </div>
             <div>
-              <p className="text-[#144a31] text-xl font-bold">{card.title}</p>
+              <p className="text-[#144a31] text-lg font-bold">{card.title}</p>
               <p className="text-2xl font-bold text-gray-800">{card.value}</p>
             </div>
           </div>

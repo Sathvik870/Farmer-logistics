@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       <div className="flex items-center h-20 border-b-2 border-[#144a31]  px-6 flex-shrink-0">
         <img src="/logo.svg" alt="Company Logo" className="h-8 w-8" />
         <span
-          className={`ml-3 text-2xl font-bold whitespace-nowrap overflow-hidden transition-opacity duration-200 ${
+          className={`ml-3 text-xl font-bold whitespace-nowrap overflow-hidden transition-opacity duration-200 ${
             isOpen ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             key={link.name}
             to={link.path}
             className={({ isActive }) =>
-              `relative  text-xl flex items-center p-3 rounded-lg transition-colors duration-200 ${
+              `relative  text-base flex items-center p-3 rounded-lg transition-colors duration-200 ${
                 isActive
                   ? "bg-[#144a3110] text-[#144a31] font-semibold"
                   : "hover:bg-[#387c40] hover:text-[#f7f7f7]"
@@ -90,13 +90,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </NavLink>
         ))}
 
-        <div className="pt-6 mt-6 border-t border-gray-200 space-y-2">
+        <div className="pt-6 mt-6 border-t border-gray-300 space-y-2">
           {secondaryLinks.map((link) => (
             <NavLink
               key={link.name}
               to={link.path}
               className={({ isActive }) =>
-                `relative text-xl flex items-center p-3 rounded-lg transition-colors duration-200  ${
+                `relative text-base flex items-center p-3 rounded-lg transition-colors duration-200  ${
                   isActive
                     ? "bg-[#144a3110] text-[#144a31] font-semibold"
                     : "hover:bg-[#387c40] hover:text-[#f7f7f7]"

@@ -3,7 +3,7 @@ const logger = require('../config/logger');
 
 exports.getUserProfile = async (req, res) => {
     const userId = req.user.userId;
-    logger.info(`[USER] Fetching profile for user ID: ${userId}`);
+    logger.info(`[USER] Attempting to fetch profile for user ID: ${userId}`);
     try {
         const { rows } = await db.query('SELECT id, username, email, phone_number, role, authorized FROM users WHERE id = $1', [userId]);
 
@@ -15,6 +15,6 @@ exports.getUserProfile = async (req, res) => {
 
     } catch (error) {
         logger.error(`[USER] Error fetching profile for user ID ${userId}: ${error.message}`);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };

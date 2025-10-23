@@ -9,6 +9,7 @@ import RootRedirect from "./pages/RootRedirect";
 
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PurchaseOrdersPage from "./pages/PurchaseOrdersPage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/products" element={<ProductsPage />} />
+                <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
               </Route>
             </Route>
             <Route path="*" element={<div>404 - Page Not Found</div>} />

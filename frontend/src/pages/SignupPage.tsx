@@ -1,4 +1,3 @@
-// src/components/Signup.tsx
 import React, { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";

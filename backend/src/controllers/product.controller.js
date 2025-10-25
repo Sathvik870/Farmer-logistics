@@ -34,21 +34,18 @@ exports.getAllProducts = async (req, res) => {
     logger.error(`[PRODUCT] Error fetching products: ${error.message}`, {
       stack: error.stack,
     });
-    res.status(500).json({ message: "Internal server error" , error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
 exports.createProduct = async (req, res) => {
   const { name, category, description, unit, price } = req.body;
-  const imageBuffer = req.file ? req.file.buffer : null;
-
-  if (!name || !category || !unit || !price) {
-    return res
-      .status(400)
-      .json({ message: "Please provide all required fields." });
-  }
-
-  if (imageBuffer) {
+  const imageBuffer = req.file?.buffer;
+  if (req.file) {
+    
+    const imageMimeType = req.file.mimetype;
     const allowedTypes = ["image/jpeg", "image/png"];
     if (!allowedTypes.includes(imageMimeType)) {
       return res
@@ -57,14 +54,19 @@ exports.createProduct = async (req, res) => {
     }
 
     const MAX_SIZE = 500 * 1024;
-
     if (imageBuffer.length > MAX_SIZE) {
       return res.status(400).json({ message: "Image size exceeds 500KB." });
     }
   }
 
+  if (!name || !category || !unit || !price) {
+    return res
+      .status(400)
+      .json({ message: "Please provide all required fields." });
+  }
+
   logger.info(
-    `[PRODUCT] Attempting to create new product: '${name}'. Image attached: ${!!imageBuffer}`
+    `[PRODUCT] Attempting to create new product: '${name}'.`
   );
 
   try {
@@ -96,7 +98,9 @@ exports.createProduct = async (req, res) => {
       { stack: error.stack }
     );
 
-    res.status(500).json({ message: "Internal server error" , error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -212,7 +216,13 @@ exports.updateProduct = async (req, res) => {
       `[PRODUCT] Error updating product with ID ${req.params.id}: ${error.message}`,
       { stack: error.stack }
     );
-    res.status(500).json({ success: false, message: "Internal server error" , error: error.message});
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
   }
 };
 
@@ -237,7 +247,9 @@ exports.deleteProduct = async (req, res) => {
       `[PRODUCT] Error deleting product with ID ${id}: ${error.message}`,
       { stack: error.stack }
     );
-    res.status(500).json({ message: "Internal server error" , error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -288,6 +300,8 @@ exports.getProductById = async (req, res) => {
       `[PRODUCT] Error fetching full details for product ID ${id}: ${error.message}`,
       { stack: error.stack }
     );
-    res.status(500).json({ message: "Internal server error" , error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };

@@ -23,7 +23,7 @@ const DetailRow: React.FC<{ label: string; value: React.ReactNode }> = ({
   label,
   value,
 }) => (
-  <div className="py-3 px-2 border-b border-gray-500">
+  <div className="py-3 px-2 border-b-2 border-[#144a31]">
     <p className="text-sm font-medium text-gray-800">{label}</p>
     <p className="mt-1 text-lg text-black font-semibold">{value || "N/A"}</p>
   </div>
@@ -71,13 +71,13 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
         className="bg-[#f7f7f7] rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 bg-[#387c40] flex justify-between items-center">
+        <div className="relative p-4 bg-[#387c40] flex justify-center items-center">
           <h2 className="text-xl font-bold text-white">Product Details</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-full"
+            className="absolute right-4 p-2 rounded-full" 
           >
-            <HiX className="h-6 w-6 text-white hover:text-[#f7f7f7]" />
+            <HiX className="h-6 w-6 text-white hover:text-gray-200 transition-colors" />
           </button>
         </div>
 

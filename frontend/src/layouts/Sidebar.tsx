@@ -129,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             }`}
           >
             <p className="font-semibold text-lg">
-              {user?.username || "Annette Black"}
+              {user?.first_name || "User"}
             </p>
             <p className="text-medium text-gray-500">
               {user?.role || "Designation"}

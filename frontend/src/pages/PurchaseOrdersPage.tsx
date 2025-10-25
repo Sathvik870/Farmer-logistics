@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import api from "../api";
 import { useAlert } from "../context/AlertContext";
-import { HiPlus, HiChevronDown, HiChevronUp } from "react-icons/hi";
+import { HiPlus, HiChevronDown, HiChevronUp, HiSearch, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
 import AddPurchaseOrderModal from "../components/AddPurchaseOrderModal";
 
 interface PurchaseOrder {
   purchase_id: number;
+  purchase_code: string;
   purchase_date: string;
   supplier_name: string;
   supplier_contact: string;
-  total_amount: string; 
+  total_amount: string;
 }
 
 interface PurchaseOrderItem {
@@ -23,11 +24,20 @@ interface PurchaseOrderItem {
   unit: string;
 }
 
+type SortConfig = {
+  key: keyof PurchaseOrder;
+  direction: "ascending" | "descending";
+} | null;
+
 const PurchaseOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+
   const { showAlert } = useAlert();
 
   const fetchOrders = async () => {
@@ -47,39 +57,107 @@ const PurchaseOrdersPage: React.FC = () => {
     fetchOrders();
   }, []);
 
+  const filteredAndSortedOrders = useMemo(() => {
+    let sortableOrders = [...orders];
+    if (searchTerm) {
+      const lowercasedFilter = searchTerm.toLowerCase();
+      sortableOrders = sortableOrders.filter((order) => {
+        const formattedDate = new Date(order.purchase_date).toLocaleString('en-IN');
+        const codeMatch = (order.purchase_code || '').toLowerCase().includes(lowercasedFilter);
+        const supplierMatch = (order.supplier_name || '').toLowerCase().includes(lowercasedFilter);
+        const dateMatch = formattedDate.toLowerCase().includes(lowercasedFilter);
+        const amountMatch = (order.total_amount || '').includes(lowercasedFilter);
+        return codeMatch || supplierMatch || dateMatch || amountMatch;
+      });
+    }
+
+    if (sortConfig !== null) {
+      sortableOrders.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        let comparison = 0;
+        if (sortConfig.key === "total_amount") {
+          comparison = Number(aValue) - Number(bValue);
+        } else if (sortConfig.key === "purchase_date") {
+          comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
+        } else {
+          comparison = String(aValue || '').localeCompare(String(bValue || '')); 
+        }
+
+        return sortConfig.direction === "ascending" ? comparison : -comparison;
+      });
+    }
+
+    return sortableOrders;
+  }, [orders, searchTerm, sortConfig]);
+
+  const requestSort = (key: keyof PurchaseOrder) => {
+  if (!sortConfig || sortConfig.key !== key) {
+    setSortConfig({ key, direction: 'ascending' });
+  } else if (sortConfig.direction === 'ascending') {
+    setSortConfig({ key, direction: 'descending' });
+  } else {
+    setSortConfig(null);
+  }
+};
+
   const toggleAccordion = (id: number) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Purchase Orders</h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex gap-3 text-lg cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center"
-        >
-          <HiPlus size={20} /> Add Purchase Order
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#144a31] focus:text-[#144a31]" />
+            <input
+              type="text"
+              placeholder="Search orders..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border-2 border-[#144a31] rounded-full focus:outline-none focus:ring-2 focus:ring-[#144a31]"
+            />
+          </div>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex gap-2 text-lg cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-6 py-2.5 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center"
+          >
+            <HiPlus size={20} /> Add Purchase Order
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {loading ? (
-          <p className="text-center text-xl text-gray-600">Loading orders...</p>
-        ) : orders.length === 0 ? (
-          <p className="text-center text-xl text-gray-600">
-            No purchase orders found.
-          </p>
-        ) : (
-          orders.map((order) => (
-            <PurchaseOrderAccordion
-              key={order.purchase_id}
-              order={order}
-              isExpanded={expandedId === order.purchase_id}
-              toggleExpand={() => toggleAccordion(order.purchase_id)}
-            />
-          ))
-        )}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <table className="min-w-full">
+          <thead className="bg-[#387c40] border-b-2 border-gray-200">
+            <tr>
+              <SortableHeader title="Purchase Code" sortKey="purchase_code" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader title="Supplier" sortKey="supplier_name" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader title="Date" sortKey="purchase_date" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader title="Total" sortKey="total_amount" sortConfig={sortConfig} requestSort={requestSort} isRightAligned />
+              <th className="px-6 py-4 w-[5%]"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} className="text-center p-8 text-xl text-gray-600">Loading orders...</td></tr>
+            ) : filteredAndSortedOrders.length === 0 ? (
+              <tr><td colSpan={5} className="text-center p-8 text-xl text-gray-600">No purchase orders found.</td></tr>
+            ) : (
+              filteredAndSortedOrders.map((order) => (
+                <AccordionRow
+                  key={order.purchase_id}
+                  order={order}
+                  isExpanded={expandedId === order.purchase_id}
+                  toggleExpand={() => toggleAccordion(order.purchase_id)}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       <AddPurchaseOrderModal
@@ -91,7 +169,32 @@ const PurchaseOrdersPage: React.FC = () => {
   );
 };
 
-const PurchaseOrderAccordion: React.FC<{
+const SortableHeader: React.FC<{
+  title: string;
+  sortKey: keyof PurchaseOrder;
+  sortConfig: SortConfig;
+  requestSort: (key: keyof PurchaseOrder) => void;
+  isRightAligned?: boolean;
+}> = ({ title, sortKey, sortConfig, requestSort, isRightAligned }) => {
+  const isSorted = sortConfig?.key === sortKey;
+  const directionIcon = isSorted ? (
+    sortConfig?.direction === 'ascending' ? <HiArrowSmUp /> : <HiArrowSmDown />
+  ) : null;
+
+  return (
+    <th 
+      className={`px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider cursor-pointer select-none ${isRightAligned ? 'text-right' : ''}`}
+      onClick={() => requestSort(sortKey)}
+    >
+      <div className={`flex items-center gap-2 ${isRightAligned ? 'justify-end' : ''}`}>
+        {title}
+        {directionIcon}
+      </div>
+    </th>
+  );
+};
+
+const AccordionRow: React.FC<{
   order: PurchaseOrder;
   isExpanded: boolean;
   toggleExpand: () => void;
@@ -104,9 +207,7 @@ const PurchaseOrderAccordion: React.FC<{
     if (isExpanded && items.length === 0) {
       setLoadingItems(true);
       try {
-        const response = await api.get<PurchaseOrderItem[]>(
-          `/api/purchases/${order.purchase_id}/items`
-        );
+        const response = await api.get<PurchaseOrderItem[]>(`/api/purchases/${order.purchase_id}/items`);
         setItems(response.data);
       } catch (error) {
         showAlert("Failed to load order items.", "error");
@@ -121,86 +222,59 @@ const PurchaseOrderAccordion: React.FC<{
     fetchItems();
   }, [isExpanded]);
 
-  const formattedDate = new Date(order.purchase_date).toLocaleDateString();
+  const formattedDate = new Date(order.purchase_date).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   return (
-    <div className="bg-[#f7f7f7] rounded-xl shadow-md overflow-hidden">
-
-      <div
-        className="flex items-center justify-between p-6 cursor-pointer border-b hover:bg-[#387c4010] transition-all"
-        onClick={toggleExpand}
-      >
-        <div className="font-semibold text-lg text-gray-800 w-1/4">
-          PO-{String(order.purchase_id).padStart(4, "0")}
-        </div>
-        <div className="text-base text-gray-600 w-1/4">
-          Supplier: {order.supplier_name}
-        </div>
-        <div className="text-base text-gray-600 w-1/4">
-          Date: {formattedDate}
-        </div>
-        <div className="text-xl font-bold text-[#144a31] w-1/4 text-right flex justify-end items-center gap-4">
-          Total: ${Number(order.total_amount).toFixed(2)}
-          {isExpanded ? <HiChevronUp size={24} /> : <HiChevronDown size={24} />}
-        </div>
-      </div>
-
-      {/* Content Area */}
+    <>
+      <tr className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onClick={toggleExpand}>
+        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-800">{order.purchase_code}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-gray-600">{order.supplier_name}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-gray-600">{formattedDate}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-right font-bold text-[#144a31]">₹{Number(order.total_amount).toFixed(2)}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-right">
+          {isExpanded ? <HiChevronUp size={24} className="text-gray-500" /> : <HiChevronDown size={24} className="text-gray-500" />}
+        </td>
+      </tr>
       {isExpanded && (
-        <div className="p-6 bg-white/70">
-          <h3 className="text-lg font-semibold mb-3 border-b pb-2 text-gray-700">
-            Order Items
-          </h3>
-          {loadingItems ? (
-            <p>Loading items...</p>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Code
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Product
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Qty
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Rate
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Subtotal
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {items.map((item) => (
-                  <tr key={item.item_id}>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {item.product_code}
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {item.product_name}
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {item.quantity} {item.unit}
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      ${Number(item.purchase_price).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm font-semibold text-[#144a31]">
-                      $
-                      {(item.quantity * Number(item.purchase_price)).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <tr>
+          <td colSpan={5} className="p-4 bg-gray-100">
+             {loadingItems ? (
+                <p className="text-center p-4">Loading items...</p>
+             ) : (
+                <table className="min-w-full">
+                  <thead className="bg-[#387c40]">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-white uppercase">Code</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-white uppercase">Product</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-white uppercase">Qty</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-white uppercase">Rate</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-white uppercase">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {items.map((item) => (
+                      <tr key={item.item_id}>
+                        <td className="px-4 py-2 text-sm text-gray-900">{item.product_code}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{item.product_name}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{item.quantity} {item.unit}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">₹{Number(item.purchase_price).toFixed(2)}</td>
+                        <td className="px-4 py-2 text-sm font-semibold text-green-800">₹{(item.quantity * Number(item.purchase_price)).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             )}
+          </td>
+        </tr>
       )}
-    </div>
+    </>
   );
 };
 

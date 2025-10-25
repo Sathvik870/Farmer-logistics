@@ -145,8 +145,8 @@ const ProductsPage: React.FC = () => {
     {
       field: "price",
       headerName: "Price",
-      valueFormatter: (p) => `$${Number(p.value).toFixed(2)} / ${p.data.unit}`,
-      flex: 1.5,
+      valueFormatter: (p) => `₹${Number(p.value).toFixed(2)} / ${p.data.unit}`,
+      flex: 2,
     },
     {
       field: "actions",

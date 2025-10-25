@@ -6,6 +6,11 @@ interface User {
   id: number;
   username: string;
   role: 'admin' | 'superadmin';
+  email: string;
+  phone_number: string;
+  authorized: boolean;
+  first_name: string;
+  last_name: string;
 }
 
 interface AuthContextType {

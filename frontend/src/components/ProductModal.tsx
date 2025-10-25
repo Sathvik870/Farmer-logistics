@@ -1,12 +1,13 @@
-import { useAlert } from '../context/AlertContext';
+import { useAlert } from "../context/AlertContext";
 import api from "../api";
 import React, { useState, useEffect } from "react";
 import type { ProductWithImage as Product } from "../pages/ProductsPage";
+import { HiX } from "react-icons/hi";
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveSuccess: () => void; 
+  onSaveSuccess: () => void;
   productToEdit: Product | null;
 }
 
@@ -88,174 +89,233 @@ const ProductModal: React.FC<ProductModalProps> = ({
       }
     });
     if (selectedFile) {
-      submissionFormData.append('productImage', selectedFile);
+      submissionFormData.append("productImage", selectedFile);
     }
 
     try {
       const isEditing = !!productToEdit?.product_id;
-      
+
       if (isEditing) {
-        await api.put(`/api/products/${productToEdit.product_id}`, submissionFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await api.put(
+          `/api/products/${productToEdit.product_id}`,
+          submissionFormData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
       } else {
-        await api.post('/api/products', submissionFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        await api.post("/api/products", submissionFormData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
       }
-      
-      showAlert(`Product ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
+
+      showAlert(
+        `Product ${isEditing ? "updated" : "created"} successfully!`,
+        "success"
+      );
       onSaveSuccess();
       onClose();
-
-    } catch (error) {
-      showAlert('Failed to save product.', 'error');
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || "An unexpected error occurred";
+      showAlert(`Failed to save product: ${errorMessage}`, "error");
       console.error(error);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#ffffffe8]">
-      <div className="bg-[#f7f7f7] p-6 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <div className="flex-shrink-0">
-          <h2 className="text-2xl font-bold text-black mb-6 text-center">
-            {productToEdit ? "Edit Product" : "Add New Product"}
-          </h2>
+      <div className="bg-[#f7f7f7] rounded-xl shadow-2xl w-full max-w-[700px] flex flex-col max-h-[90vh] overflow-hidden">
+        <div className="relative flex-shrink-0 p-6 bg-[#387c40]">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1.5 text-white  transition-colors"
+          aria-label="Close modal"
+        >
+          <HiX className="h-6 w-6 text-white hover:text-gray-200 transition-colors" />
+        </button>
+        <h2 className="text-2xl font-bold text-white text-center">
+          {productToEdit ? "Edit Product" : "Add New Product"}
+        </h2>
+        {productToEdit && (
+          <div className="mt-2 text-center">
+            <p className="text-lg text-gray-200">
+              Product Code:{" "}
+              <span className="font-semibold text-white">
+                {productToEdit.product_code}
+              </span>
+            </p>
+          </div>
+        )}
+      </div>
 
-          {productToEdit && (
-            <div className="mb-4 text-center">
-              <p className="text-lg text-gray-500">
-                Product Code:{" "}
-                <span className="font-semibold text-black">
-                  {productToEdit.product_code}
-                </span>
-              </p>
+        <div className="flex-grow overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-x-6">
+              <div className="md:col-span-3 flex flex-col space-y-5">
+                <div>
+                  <label htmlFor="name" className={labelStyle}>
+                    Product Name
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    value={formData.name || ""}
+                    onChange={handleChange}
+                    required
+                    className={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="category" className={labelStyle}>
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    name="category"
+                    value={formData.category || ""}
+                    onChange={handleChange}
+                    className={inputStyle}
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="unit" className={labelStyle}>
+                    Unit
+                  </label>
+                  <select
+                    id="unit"
+                    name="unit"
+                    value={formData.unit || ""}
+                    onChange={handleChange}
+                    className={inputStyle}
+                  >
+                    {unitOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="price" className={labelStyle}>
+                    Price
+                  </label>
+                  <input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    value={formData.price || 0}
+                    onChange={handleChange}
+                    required
+                    className={inputStyle}
+                  />
+                </div>
+                <div className="pt-2">
+                  <label htmlFor="description" className={labelStyle}>
+                    Description (Optional)
+                  </label>
+                  <input
+                    id="description"
+                    name="description"
+                    value={formData.description || ""}
+                    onChange={handleChange}
+                    className={`${inputStyle} w-full`}
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-2 mt-6 md:mt-0 flex flex-col items-center justify-center">
+                <input
+                  id="productImage"
+                  name="productImage"
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="image/png, image/jpeg"
+                  className="hidden"
+                />
+                {previewUrl ? (
+                  <div className="w-full text-center">
+                    <img
+                      src={previewUrl}
+                      alt="Product Preview"
+                      className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
+                      onClick={() => setIsLargePreviewOpen(true)}
+                    />
+                    <label
+                      htmlFor="productImage"
+                      className="mt-2 inline-block text-sm font-semibold text-green-700 cursor-pointer hover:text-green-800 hover:underline transition-colors"
+                    >
+                      Change Image
+                    </label>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="productImage"
+                    className="w-full h-48 flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-12 w-12 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 8v.01"
+                      />{" "}
+                    </svg>
+                    <span className="mt-2 text-sm font-semibold text-gray-600">
+                      Upload Product Image
+                    </span>
+                    <p className="mt-1 text-xs text-gray-500">
+                      JPG, PNG, up to 500KB
+                    </p>
+                  </label>
+                )}
+              </div>
             </div>
-          )}
+          </form>
         </div>
-        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto space-y-5 pr-4 -mr-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            <div>
-              <label htmlFor="name" className={labelStyle}>
-                Product Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                value={formData.name || ''}
-                onChange={handleChange}
-                required
-                className={inputStyle}
-              />
-            </div>
-            <div>
-              <label htmlFor="category" className={labelStyle}>
-                Category
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category || ''}
-                onChange={handleChange}
-                className={inputStyle}
-              >
-                {categoryOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="unit" className={labelStyle}>
-                Unit
-              </label>
-              <select
-                id="unit"
-                name="unit"
-                value={formData.unit || ''}
-                onChange={handleChange}
-                className={inputStyle}
-              >
-                {unitOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="price" className={labelStyle}>
-                Price
-              </label>
-              <input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                value={formData.price || 0}
-                onChange={handleChange}
-                required
-                className={inputStyle}
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="productImage" className={labelStyle}>
-              Product Image
-            </label>
-            <input
-              id="productImage"
-              name="productImage"
-              type="file"
-              onChange={handleFileChange}
-              accept="image/png, image/jpeg"
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-            />
-          </div>
 
-          {previewUrl && (
-            <div className="mt-2">
-              <label className={labelStyle}>Image Preview</label>
-              <img
-                src={previewUrl}
-                alt="Product Preview"
-                className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-green-500 transition"
-                onClick={() => setIsLargePreviewOpen(true)}
-              />
-            </div>
-          )}
-          <div>
-            <label htmlFor="description" className={labelStyle}>
-              Description (Optional)
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description || ""}
-              onChange={handleChange}
-              className={`${inputStyle} w-full`}
-              rows={2}
-            ></textarea>
+        <div className="flex-shrink-0 flex flex-col p-6 border-t border-gray-200 bg-gray-50">
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className={secondaryButtonStyle}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              type="submit"
+              className={`${primaryButtonStyle} flex-1 sm:flex-none`}
+            >
+              {productToEdit ? "Save Changes" : "Add Product"}
+            </button>
           </div>
-        </form>
-        <div className="flex-shrink-0 flex flex-col sm:flex-row justify-end gap-4 pt-5">
-          <button
-            type="button"
-            onClick={onClose}
-            className={secondaryButtonStyle}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            className={`${primaryButtonStyle} flex-1 sm:flex-none`}
-          >
-            {productToEdit ? "Save Changes" : "Add Product"}
-          </button>
         </div>
       </div>
+
       {isLargePreviewOpen && previewUrl && (
         <div
           className="fixed inset-0 z-[60] bg-black bg-opacity-80 flex items-center justify-center"

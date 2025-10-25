@@ -8,4 +8,8 @@ export default defineConfig({
     svgr(), 
     tailwindcss()
   ],
+  build: {
+    outDir: 'dist'
+  },
+  publicDir: 'public'
 })

@@ -20,20 +20,20 @@ interface ModalProps {
 interface ProductItem {
   product_id: number;
   product_code: string;
-  name: string;
-  category: string;
-  unit: string;
-  price: number;
+  product_name: string;
+  product_category: string;
+  unit_type: string;
+  cost_price: number;
 }
 
 interface OrderItem {
   product_id: number;
   product_code: string;
   product_name: string;
-  category: string;
-  unit: string;
-  quantity: number;
-  purchase_rate: number;
+  product_category: string;
+  unit_type: string;
+  purchase_quantity: number;
+  purchase_price: number;
   line_total: number;
 }
 
@@ -53,10 +53,10 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
     product_id: "",
     product_code: "",
     product_name: "",
-    category: "",
-    unit: "",
-    quantity: 0,
-    purchase_rate: 0,
+    product_category: "",
+    unit_type: "",
+    purchase_quantity: 0,
+    purchase_price: 0,
   });
 
   useEffect(() => {
@@ -92,33 +92,33 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
       setCurrentItem({
         product_id: String(product.product_id),
         product_code: product.product_code,
-        product_name: product.name,
-        category: product.category,
-        unit: product.unit,
-        quantity: 1,
-        purchase_rate: product.price,
+        product_name: product.product_name,
+        product_category: product.product_category,
+        unit_type: product.unit_type,
+        purchase_quantity: 1,
+        purchase_price: product.cost_price,
       });
     } else {
       setCurrentItem({
         product_id: "",
         product_code: "",
         product_name: "",
-        category: "",
-        unit: "",
-        quantity: 0,
-        purchase_rate: 0,
+        product_category: "",
+        unit_type: "",
+        purchase_quantity: 0,
+        purchase_price: 0,
       });
     }
   };
 
   const handleAddItem = () => {
-    const { product_id, quantity, purchase_rate } = currentItem;
-    const numQuantity = Number(quantity);
-    const numPurchaseRate = Number(purchase_rate);
+    const { product_id, purchase_quantity, purchase_price } = currentItem;
+    const numQuantity = Number(purchase_quantity);
+    const numPurchasePrice = Number(purchase_price);
 
-    if (!product_id || numQuantity <= 0 || numPurchaseRate < 0) {
+    if (!product_id || numQuantity <= 0 || numPurchasePrice < 0) {
       showAlert(
-        "Please select a product and enter a valid quantity & rate.",
+        "Please select a product and enter a valid quantity & price.",
         "warning"
       );
       return;
@@ -131,12 +131,12 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
       setOrderItems((prevItems) =>
         prevItems.map((item, index) => {
           if (index === existingItemIndex) {
-            const newQuantity = item.quantity + numQuantity;
+            const newQuantity = item.purchase_quantity + numQuantity;
             return {
               ...item,
-              quantity: newQuantity,
-              purchase_rate: numPurchaseRate,
-              line_total: newQuantity * numPurchaseRate,
+              purchase_quantity: newQuantity,
+              purchase_price: numPurchasePrice,
+              line_total: newQuantity * numPurchasePrice,
             };
           }
           return item;
@@ -147,11 +147,11 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
         product_id: Number(product_id),
         product_code: currentItem.product_code,
         product_name: currentItem.product_name,
-        category: currentItem.category,
-        unit: currentItem.unit,
-        quantity: numQuantity,
-        purchase_rate: numPurchaseRate,
-        line_total: numQuantity * numPurchaseRate,
+        product_category: currentItem.product_category,
+        unit_type: currentItem.unit_type,
+        purchase_quantity: numQuantity,
+        purchase_price: numPurchasePrice,
+        line_total: numQuantity * numPurchasePrice,
       };
       setOrderItems((prev) => [...prev, newItem]);
     }
@@ -159,10 +159,10 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
       product_id: "",
       product_code: "",
       product_name: "",
-      category: "",
-      unit: "",
-      quantity: 0,
-      purchase_rate: 0,
+      product_category: "",
+      unit_type: "",
+      purchase_quantity: 0,
+      purchase_price: 0,
     });
   };
 
@@ -191,11 +191,11 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
         supplier_contact: supplierContact || null,
         items: orderItems.map((item) => ({
           product_id: item.product_id,
-          quantity: item.quantity,
-          purchase_rate: item.purchase_rate,
+          purchase_quantity: item.purchase_quantity,
+          purchase_price: item.purchase_price,
         })),
       };
-      await api.post("/api/purchases", payload);
+      await api.post("/api/purchase-orders", payload);
       showAlert("Purchase Order submitted successfully!", "success");
       onSaveSuccess();
       onClose();
@@ -224,45 +224,107 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
         <div className="p-6">
           <div className="flex flex-wrap items-end gap-x-4 gap-y-5">
             <div className="flex-1 min-w-[200px]">
-              <label htmlFor="productSelect" className={labelStyle}>Product - Code & Name</label>
-              {loadingProducts ? <p className="pt-2">Loading...</p> : (
-                <select id="productSelect" value={currentItem.product_id} onChange={(e) => handleProductSelect(e.target.value)} className={inputStyle}>
+              <label htmlFor="productSelect" className={labelStyle}>
+                Product - Code & Name
+              </label>
+              {loadingProducts ? (
+                <p className="pt-2">Loading...</p>
+              ) : (
+                <select
+                  id="productSelect"
+                  value={currentItem.product_id}
+                  onChange={(e) => handleProductSelect(e.target.value)}
+                  className={inputStyle}
+                >
                   <option value="">Select Product</option>
-                  {availableProducts.map((p) => (<option key={p.product_id} value={p.product_id}>{p.product_code} - {p.name}</option>))}
+                  {availableProducts.map((p) => (
+                    <option key={p.product_id} value={p.product_id}>
+                      {p.product_code} - {p.product_name}
+                    </option>
+                  ))}
                 </select>
               )}
             </div>
             <div className="w-28">
               <label className={labelStyle}>Category</label>
-              <input type="text" disabled value={currentItem.category || "-"} className={`${inputStyle} bg-gray-100`} />
+              <input
+                type="text"
+                disabled
+                value={currentItem.product_category || "-"}
+                className={`${inputStyle} bg-gray-100`}
+              />
             </div>
 
             <div className="w-28">
               <label className={labelStyle}>Unit</label>
-              <input type="text" disabled value={currentItem.unit || "-"} className={`${inputStyle} bg-gray-100`} />
+              <input
+                type="text"
+                disabled
+                value={currentItem.unit_type || "-"}
+                className={`${inputStyle} bg-gray-100`}
+              />
             </div>
 
             <div className="w-28">
-              <label htmlFor="quantity" className={labelStyle}>Quantity</label>
-              <input id="quantity" name="quantity" type="number" min="0" value={currentItem.quantity || ""} onChange={handleItemChange} className={inputStyle} />
+              <label htmlFor="purchase_quantity" className={labelStyle}>
+                Quantity
+              </label>
+              <input
+                id="purchase_quantity"
+                name="purchase_quantity"
+                type="number"
+                min="0"
+                value={currentItem.purchase_quantity || ""}
+                onChange={handleItemChange}
+                className={inputStyle}
+              />
             </div>
 
             <div className="w-28">
-              <label htmlFor="purchase_rate" className={labelStyle}>Purchase Price</label>
-              <input id="purchase_rate" name="purchase_rate" type="number" value={currentItem.purchase_rate || ""} onChange={handleItemChange} className={inputStyle} />
+              <label htmlFor="purchase_price" className={labelStyle}>
+                Purchase Price
+              </label>
+              <input
+                id="purchase_price"
+                name="purchase_price"
+                type="number"
+                value={currentItem.purchase_price || ""}
+                onChange={handleItemChange}
+                className={inputStyle}
+              />
             </div>
             <div className="flex-1 min-w-[200px]">
-              <label htmlFor="supplierName" className={labelStyle}>Supplier Name <span className="text-md text-gray-500">(Optional)</span></label>
-              <input id="supplierName" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} className={inputStyle} />
+              <label htmlFor="supplierName" className={labelStyle}>
+                Supplier Name{" "}
+                <span className="text-md text-gray-500">(Optional)</span>
+              </label>
+              <input
+                id="supplierName"
+                value={supplierName}
+                onChange={(e) => setSupplierName(e.target.value)}
+                className={inputStyle}
+              />
             </div>
 
             <div className="flex-1 min-w-[200px]">
-              <label htmlFor="supplierContact" className={labelStyle}>Supplier Contact <span className="text-md text-gray-500">(Optional)</span></label>
-              <input id="supplierContact" value={supplierContact} onChange={(e) => setSupplierContact(e.target.value)} className={inputStyle} />
+              <label htmlFor="supplierContact" className={labelStyle}>
+                Supplier Contact{" "}
+                <span className="text-md text-gray-500">(Optional)</span>
+              </label>
+              <input
+                id="supplierContact"
+                value={supplierContact}
+                onChange={(e) => setSupplierContact(e.target.value)}
+                className={inputStyle}
+              />
             </div>
 
             <div className="flex-shrink-0">
-              <button type="button" onClick={handleAddItem} className="h-10 w-10 flex items-center justify-center text-white font-semibold bg-[#144a31] rounded-full hover:bg-[#387c40] transition-colors">
+              <button
+                type="button"
+                onClick={handleAddItem}
+                className="h-10 w-10 flex items-center justify-center text-white font-semibold bg-[#144a31] rounded-full hover:bg-[#387c40] transition-colors"
+              >
                 <HiPlus size={24} />
               </button>
             </div>
@@ -313,13 +375,13 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
                         {item.product_name}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-md">
-                        {item.category}
+                        {item.product_category}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-md">
-                        {item.quantity} {item.unit}
+                        {item.purchase_quantity} {item.unit_type}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-md">
-                        ₹{item.purchase_rate.toFixed(2)}
+                        ₹{item.purchase_price.toFixed(2)}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-md font-semibold text-right">
                         ₹{item.line_total.toFixed(2)}

@@ -19,7 +19,6 @@ import {
   HiOutlineCreditCard,
 } from "react-icons/hi";
 
-
 const allStatCards = [
   {
     type: "primary",
@@ -52,7 +51,7 @@ const allStatCards = [
   {
     title: "Revenue This Month",
     value: "₹12,650",
-    icon: <HiCash size={28} />, 
+    icon: <HiCash size={28} />,
     color: "bg-blue-500",
   },
   {
@@ -65,13 +64,13 @@ const allStatCards = [
     title: "Completed Orders",
     value: "946",
     icon: <HiOutlineCheckCircle size={28} />,
-    color: "bg-green-500", 
+    color: "bg-green-500",
   },
   {
     title: "Pending Payments",
     value: "31",
     icon: <HiOutlineCreditCard size={28} />,
-    color: "bg-red-500", 
+    color: "bg-red-500",
   },
 ];
 
@@ -109,7 +108,6 @@ const productSales = [
     img: "https://images.unsplash.com/photo-1592928301233-bce7a7c4b4cb?auto=format&fit=crop&w=40&h=40",
   },
 ];
-
 
 const dailyOrdersData = [
   { name: "M", Orders: 12, Views: 4000 },

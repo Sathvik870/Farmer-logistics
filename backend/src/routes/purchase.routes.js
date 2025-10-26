@@ -11,6 +11,6 @@ router.use(protect);
 
 router.route("/").get(getAllPurchaseOrders).post(createPurchaseOrder);
 
-router.get("/:id/items", getPurchaseOrderDetails);
+router.get("/:code/details", getPurchaseOrderDetails);
 
 module.exports = router;

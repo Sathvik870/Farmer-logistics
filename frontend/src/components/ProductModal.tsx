@@ -39,11 +39,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setPreviewUrl(productToEdit.imageUrl || null);
     } else {
       setFormData({
-        name: "",
-        category: categoryOptions[0],
-        description: "",
-        unit: unitOptions[0],
-        price: 0,
+        product_name: "",
+        product_category: categoryOptions[0],
+        product_description: "",
+        unit_type: unitOptions[0],
+        cost_price: 0,
       });
       setPreviewUrl(null);
     }
@@ -127,53 +127,53 @@ const ProductModal: React.FC<ProductModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#ffffffe8]">
       <div className="bg-[#f7f7f7] rounded-xl shadow-2xl w-full max-w-[700px] flex flex-col max-h-[90vh] overflow-hidden">
         <div className="relative flex-shrink-0 p-6 bg-[#387c40]">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-white  transition-colors"
-          aria-label="Close modal"
-        >
-          <HiX className="h-6 w-6 text-white hover:text-gray-200 transition-colors" />
-        </button>
-        <h2 className="text-2xl font-bold text-white text-center">
-          {productToEdit ? "Edit Product" : "Add New Product"}
-        </h2>
-        {productToEdit && (
-          <div className="mt-2 text-center">
-            <p className="text-lg text-gray-200">
-              Product Code:{" "}
-              <span className="font-semibold text-white">
-                {productToEdit.product_code}
-              </span>
-            </p>
-          </div>
-        )}
-      </div>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1.5 text-white  transition-colors"
+            aria-label="Close modal"
+          >
+            <HiX className="h-6 w-6 text-white hover:text-gray-200 transition-colors" />
+          </button>
+          <h2 className="text-2xl font-bold text-white text-center">
+            {productToEdit ? "Edit Product" : "Add New Product"}
+          </h2>
+          {productToEdit && (
+            <div className="mt-2 text-center">
+              <p className="text-lg text-gray-200">
+                Product Code:{" "}
+                <span className="font-semibold text-white">
+                  {productToEdit.product_code}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
 
         <div className="flex-grow overflow-y-auto">
           <form onSubmit={handleSubmit} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-x-6">
               <div className="md:col-span-3 flex flex-col space-y-5">
                 <div>
-                  <label htmlFor="name" className={labelStyle}>
+                  <label htmlFor="product_name" className={labelStyle}>
                     Product Name
                   </label>
                   <input
-                    id="name"
-                    name="name"
-                    value={formData.name || ""}
+                    id="product_name"
+                    name="product_name"
+                    value={formData.product_name || ""}
                     onChange={handleChange}
                     required
                     className={inputStyle}
                   />
                 </div>
                 <div>
-                  <label htmlFor="category" className={labelStyle}>
+                  <label htmlFor="product_category" className={labelStyle}>
                     Category
                   </label>
                   <select
-                    id="category"
-                    name="category"
-                    value={formData.category || ""}
+                    id="product_category"
+                    name="product_category"
+                    value={formData.product_category || ""}
                     onChange={handleChange}
                     className={inputStyle}
                   >
@@ -185,13 +185,13 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="unit" className={labelStyle}>
+                  <label htmlFor="unit_type" className={labelStyle}>
                     Unit
                   </label>
                   <select
-                    id="unit"
-                    name="unit"
-                    value={formData.unit || ""}
+                    id="unit_type"
+                    name="unit_type"
+                    value={formData.unit_type || ""}
                     onChange={handleChange}
                     className={inputStyle}
                   >
@@ -203,28 +203,28 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="price" className={labelStyle}>
-                    Price
+                  <label htmlFor="cost_price" className={labelStyle}>
+                    Cost Price
                   </label>
                   <input
-                    id="price"
-                    name="price"
+                    id="cost_price"
+                    name="cost_price"
                     type="number"
                     step="0.01"
-                    value={formData.price || 0}
+                    value={formData.cost_price || 0}
                     onChange={handleChange}
                     required
                     className={inputStyle}
                   />
                 </div>
                 <div className="pt-2">
-                  <label htmlFor="description" className={labelStyle}>
+                  <label htmlFor="product_description" className={labelStyle}>
                     Description (Optional)
                   </label>
                   <input
-                    id="description"
-                    name="description"
-                    value={formData.description || ""}
+                    id="product_description"
+                    name="product_description"
+                    value={formData.product_description || ""}
                     onChange={handleChange}
                     className={`${inputStyle} w-full`}
                   />

@@ -1,11 +1,11 @@
-import { createContext, useState, useContext, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import api from '../api';
+import { createContext, useState, useContext, useEffect } from "react";
+import type { ReactNode } from "react";
+import api from "../api";
 
 interface User {
-  id: number;
+  user_id: number;
   username: string;
-  role: 'admin' | 'superadmin';
+  role: "admin" | "superadmin";
   email: string;
   phone_number: string;
   authorized: boolean;
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await api.get<User>('/api/users/profile');
+        const response = await api.get<User>("/api/users/profile");
         setUser(response.data);
       } catch (error) {
         console.error("Failed to fetch user profile", error);
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await api.post('/api/auth/logout');
+      await api.post("/api/auth/logout");
       setUser(null);
     } catch (error) {
       console.error("Logout failed", error);
@@ -56,7 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated: !!user, user, isLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

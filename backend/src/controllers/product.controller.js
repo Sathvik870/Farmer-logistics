@@ -9,12 +9,12 @@ exports.getAllProducts = async (req, res) => {
       SELECT 
         p.product_id, 
         p.product_code, 
-        p.name, 
-        p.category, 
-        COALESCE(p.description, 'N/A') as description,
-        p.unit, 
+        p.product_name, 
+        p.product_category,
+        COALESCE(p.product_description, 'N/A') as product_description,
+        p.unit_type,
         p.cost_price,
-        p.selling_price
+        p.selling_price,
         COALESCE(s.available_quantity, 0) as available_quantity
       FROM 
         products p
@@ -42,10 +42,15 @@ exports.getAllProducts = async (req, res) => {
 };
 
 exports.createProduct = async (req, res) => {
-  const { name, category, description, unit, cost_price } = req.body;
+  const {
+    product_name,
+    product_category,
+    product_description,
+    unit_type,
+    cost_price,
+  } = req.body;
   const imageBuffer = req.file?.buffer;
   if (req.file) {
-    
     const imageMimeType = req.file.mimetype;
     const allowedTypes = ["image/jpeg", "image/png"];
     if (!allowedTypes.includes(imageMimeType)) {
@@ -60,28 +65,26 @@ exports.createProduct = async (req, res) => {
     }
   }
 
-  if (!name || !category || !unit || !cost_price) {
+  if (!product_name || !product_category || !unit_type || !cost_price) {
     return res
       .status(400)
       .json({ message: "Please provide all required fields." });
   }
 
-  logger.info(
-    `[PRODUCT] Attempting to create new product: '${name}'.`
-  );
+  logger.info(`[PRODUCT] Attempting to create new product: '${product_name}'.`);
 
   try {
     const newProductQuery = `
-      INSERT INTO products (name, category, description, unit, cost_price, product_image)
+      INSERT INTO products (product_name, product_category, product_description, unit_type, cost_price, product_image)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
 
     const { rows } = await db.query(newProductQuery, [
-      name,
-      category,
-      description,
-      unit,
+      product_name,
+      product_category,
+      product_description,
+      unit_type,
       cost_price,
       imageBuffer,
     ]);
@@ -89,13 +92,13 @@ exports.createProduct = async (req, res) => {
     const { product_image, ...productData } = rows[0];
 
     logger.info(
-      `[PRODUCT] Successfully created product '${productData.name}' with ID: ${productData.product_id}.`
+      `[PRODUCT] Successfully created product '${productData.product_name}' with ID: ${productData.product_id}.`
     );
 
     res.status(201).json(productData);
   } catch (error) {
     logger.error(
-      `[PRODUCT] Error creating product '${name}': ${error.message}`,
+      `[PRODUCT] Error creating product '${product_name}': ${error.message}`,
       { stack: error.stack }
     );
 
@@ -108,7 +111,13 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, category, description, unit, cost_price } = req.body;
+    const {
+      product_name,
+      product_category,
+      product_description,
+      unit_type,
+      cost_price,
+    } = req.body;
     const imageBuffer = req.file ? req.file.buffer : null;
     const imageMimeType = req.file ? req.file.mimetype : null;
     logger.info(`[PRODUCT] Attempting update request for product ID: ${id}.`);
@@ -117,25 +126,28 @@ exports.updateProduct = async (req, res) => {
       return res.status(400).json({ message: "Invalid product ID." });
     }
 
-    if (!name || !category || !unit || !cost_price) {
+    if (!product_name || !product_category || !unit_type || !cost_price) {
       logger.warn(
         `[PRODUCT] Update failed for ID ${id}: Missing required fields.`
       );
       return res.status(400).json({ message: "Missing required fields." });
     }
 
-    if (typeof name !== "string" || name.length > 100) {
+    if (typeof product_name !== "string" || product_name.length > 100) {
       return res.status(400).json({ message: "Invalid product name." });
     }
-    if (typeof category !== "string" || category.length > 50) {
+    if (typeof product_category !== "string" || product_category.length > 50) {
       return res.status(400).json({ message: "Invalid category." });
     }
 
-    if (description && description.length > 500) {
+    if (
+      typeof product_description !== "string" ||
+      product_description.length > 500
+    ) {
       return res.status(400).json({ message: "Description too long." });
     }
 
-    if (typeof unit !== "string" || unit.length > 20) {
+    if (typeof unit_type !== "string" || unit_type.length > 20) {
       return res.status(400).json({ message: "Invalid unit." });
     }
 
@@ -167,15 +179,15 @@ exports.updateProduct = async (req, res) => {
     if (imageBuffer) {
       updateQuery = `
         UPDATE products
-        SET name = $1, category = $2, description = $3, unit = $4, cost_price = $5, product_image = $6, updated_at = CURRENT_TIMESTAMP
+        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, product_image = $6, updated_at = CURRENT_TIMESTAMP
         WHERE product_id = $7
         RETURNING *;
       `;
       queryParams = [
-        name,
-        category,
-        description || null,
-        unit,
+        product_name,
+        product_category,
+        product_description || null,
+        unit_type,
         cost_price,
         imageBuffer,
         productId,
@@ -183,15 +195,15 @@ exports.updateProduct = async (req, res) => {
     } else {
       updateQuery = `
         UPDATE products
-        SET name = $1, category = $2, description = $3, unit = $4, cost_price = $5, updated_at = CURRENT_TIMESTAMP
+        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, updated_at = CURRENT_TIMESTAMP
         WHERE product_id = $6
         RETURNING *;
       `;
       queryParams = [
-        name,
-        category,
-        description || null,
-        unit,
+        product_name,
+        product_category,
+        product_description || null,
+        unit_type,
         cost_price,
         productId,
       ];
@@ -208,7 +220,7 @@ exports.updateProduct = async (req, res) => {
 
     const { product_image, ...productData } = rows[0];
     logger.info(
-      `[PRODUCT] Successfully updated product '${productData.name}' (ID: ${id}).`
+      `[PRODUCT] Successfully updated product '${productData.product_name}' (ID: ${id}).`
     );
 
     res.status(200).json({ success: true, data: productData });
@@ -217,13 +229,11 @@ exports.updateProduct = async (req, res) => {
       `[PRODUCT] Error updating product with ID ${req.params.id}: ${error.message}`,
       { stack: error.stack }
     );
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Internal server error",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -263,8 +273,8 @@ exports.getProductById = async (req, res) => {
   try {
     const query = `
       SELECT 
-        p.product_id, p.product_code, p.name, p.category, p.description, 
-        p.unit, p.cost_price, p.selling_price, p.product_image,
+        p.product_id, p.product_code, p.product_name, p.product_category, p.product_description, 
+        p.unit_type, p.cost_price, p.selling_price, p.product_image,
         COALESCE(s.available_quantity, 0) as available_quantity
       FROM 
         products p

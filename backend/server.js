@@ -56,7 +56,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/purchases", purchaseRoutes);
+app.use("/api/purchase-orders", purchaseRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

@@ -25,7 +25,10 @@ function App() {
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/products" element={<ProductsPage />} />
-                <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                <Route
+                  path="/purchase-orders"
+                  element={<PurchaseOrdersPage />}
+                />
               </Route>
             </Route>
             <Route path="*" element={<div>404 - Page Not Found</div>} />

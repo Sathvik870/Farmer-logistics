@@ -1,7 +1,7 @@
-import { createContext, useState, useContext } from 'react';
-import type { ReactNode } from 'react';
-import AlertModal from '../components/AlertModal';
-import type { AlertType } from '../components/AlertModal';
+import { createContext, useState, useContext } from "react";
+import type { ReactNode } from "react";
+import AlertModal from "../components/AlertModal";
+import type { AlertType } from "../components/AlertModal";
 
 interface AlertState {
   isOpen: boolean;
@@ -12,23 +12,33 @@ interface AlertState {
 }
 
 interface AlertContextType {
-  showAlert: (message: string, type: AlertType, onConfirm?: () => void, title?: string) => void;
+  showAlert: (
+    message: string,
+    type: AlertType,
+    onConfirm?: () => void,
+    title?: string
+  ) => void;
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
 const initialState: AlertState = {
   isOpen: false,
-  type: 'success',
-  message: '',
-  title: '',
+  type: "success",
+  message: "",
+  title: "",
   onConfirm: undefined,
 };
 
 export const AlertProvider = ({ children }: { children: ReactNode }) => {
   const [alertState, setAlertState] = useState<AlertState>(initialState);
 
-  const showAlert = (message: string, type: AlertType, onConfirm?: () => void, title: string = '') => {
+  const showAlert = (
+    message: string,
+    type: AlertType,
+    onConfirm?: () => void,
+    title: string = ""
+  ) => {
     setAlertState({
       isOpen: true,
       message,
@@ -61,7 +71,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
 export const useAlert = () => {
   const context = useContext(AlertContext);
   if (context === undefined) {
-    throw new Error('useAlert must be used within an AlertProvider');
+    throw new Error("useAlert must be used within an AlertProvider");
   }
   return context;
 };

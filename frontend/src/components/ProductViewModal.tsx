@@ -4,11 +4,11 @@ import { HiX } from "react-icons/hi";
 
 interface ProductDetails {
   product_code: string;
-  name: string;
-  category: string;
-  description?: string;
-  unit: string;
-  price: number;
+  product_name: string;
+  product_category: string;
+  product_description?: string;
+  unit_type: string;
+  cost_price: number;
   available_quantity: number;
   imageUrl?: string | null;
 }
@@ -75,7 +75,7 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
           <h2 className="text-xl font-bold text-white">Product Details</h2>
           <button
             onClick={onClose}
-            className="absolute right-4 p-2 rounded-full" 
+            className="absolute right-4 p-2 rounded-full"
           >
             <HiX className="h-6 w-6 text-white hover:text-gray-200 transition-colors" />
           </button>
@@ -91,29 +91,36 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
                 {product.imageUrl ? (
                   <img
                     src={product.imageUrl}
-                    alt={product.name}
+                    alt={product.product_name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-gray-500 text-xs text-center">No Image</span>
+                  <span className="text-gray-500 text-xs text-center">
+                    No Image
+                  </span>
                 )}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-              <DetailRow label="Product Name" value={product.name} />
+              <DetailRow label="Product Name" value={product.product_name} />
               <DetailRow label="Product Code" value={product.product_code} />
-              <DetailRow label="Category" value={product.category} />
+              <DetailRow label="Category" value={product.product_category} />
               <DetailRow
-                label="Price"
-                value={`$${Number(product.price).toFixed(2)} / ${product.unit}`}
+                label="Cost Price"
+                value={`$${Number(product.cost_price).toFixed(2)} / ${
+                  product.unit_type
+                }`}
               />
               <DetailRow
                 label="Available Stock"
-                value={`${product.available_quantity} ${product.unit}`}
+                value={`${product.available_quantity} ${product.unit_type}`}
               />
-              <DetailRow label="Unit" value={product.unit} />
+              <DetailRow label="Unit" value={product.unit_type} />
               <div className="md:col-span-2">
-                <DetailRow label="Description" value={product.description} />
+                <DetailRow
+                  label="Description"
+                  value={product.product_description}
+                />
               </div>
             </div>
           </div>

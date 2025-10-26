@@ -17,7 +17,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
   const handleSubmit = async (e: FormEvent) => {

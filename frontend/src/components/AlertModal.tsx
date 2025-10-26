@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import SuccessIcon from '../assets/success.svg';
-import ErrorIcon from '../assets/error.svg';
-import WarningIcon from '../assets/warning.svg';
-export type AlertType = 'success' | 'error' | 'warning';
+import React, { useEffect } from "react";
+import SuccessIcon from "../assets/success.svg";
+import ErrorIcon from "../assets/error.svg";
+import WarningIcon from "../assets/warning.svg";
+export type AlertType = "success" | "error" | "warning";
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -20,19 +20,25 @@ const icons = {
 };
 
 const titles = {
-    success: 'Success!',
-    error: 'An Error Occurred',
-    warning: 'Are you sure?',
-}
+  success: "Success!",
+  error: "An Error Occurred",
+  warning: "Are you sure?",
+};
 
 const primaryButtonStyles = {
-    warning: "bg-yellow-500 hover:bg-yellow-600 text-white",
-}
+  warning: "bg-yellow-500 hover:bg-yellow-600 text-white",
+};
 
-const AlertModal: React.FC<AlertModalProps> = ({ isOpen, type, title, message, onClose, onConfirm }) => {
-
+const AlertModal: React.FC<AlertModalProps> = ({
+  isOpen,
+  type,
+  title,
+  message,
+  onClose,
+  onConfirm,
+}) => {
   useEffect(() => {
-    if (isOpen && (type === 'success' || type === 'error')) {
+    if (isOpen && (type === "success" || type === "error")) {
       const timer = setTimeout(() => {
         onClose();
       }, 3000);
@@ -49,29 +55,28 @@ const AlertModal: React.FC<AlertModalProps> = ({ isOpen, type, title, message, o
     onClose();
   };
 
-
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#ffffffe8]"
-      onClick={type !== 'warning' ? onClose : undefined}
+      onClick={type !== "warning" ? onClose : undefined}
     >
-      <div 
+      <div
         className="flex flex-col items-center text-center max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`flex items-center justify-center h-50 w-50 rounded-full mb-6 bg-[#00000000]`}>
+        <div
+          className={`flex items-center justify-center h-50 w-50 rounded-full mb-6 bg-[#00000000]`}
+        >
           {icons[type]}
         </div>
-        
+
         <h3 className="text-3xl font-bold text-gray-900 mb-2">
-            {title || titles[type]}
+          {title || titles[type]}
         </h3>
 
-        <p className="text-lg text-gray-900 mb-8">
-          {message}
-        </p>
+        <p className="text-lg text-gray-900 mb-8">{message}</p>
 
-        {type === 'warning' && (
+        {type === "warning" && (
           <div className="flex justify-center gap-4">
             <button
               onClick={onClose}

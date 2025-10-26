@@ -10,11 +10,11 @@ import { HiPencil, HiTrash, HiEye } from "react-icons/hi";
 export interface Product {
   product_id: number;
   product_code: string;
-  name: string;
-  category: string;
-  description?: string;
-  unit: string;
-  price: number;
+  product_name: string;
+  product_category: string;
+  product_description?: string;
+  unit_type: string;
+  cost_price: number;
   available_quantity: number;
 }
 
@@ -126,10 +126,10 @@ const ProductsPage: React.FC = () => {
 
   const [columnDefs] = useState<ColDef[]>([
     { field: "product_code", headerName: "Code", flex: 1.5, sortable: true },
-    { field: "name", headerName: "Product Name", flex: 2.5 },
-    { field: "category", headerName: "Category", flex: 2 },
+    { field: "product_name", headerName: "Product Name", flex: 2.5 },
+    { field: "product_category", headerName: "Category", flex: 2 },
     {
-      field: "description",
+      field: "product_description",
       headerName: "Description",
       flex: 3,
       wrapText: true,
@@ -140,12 +140,13 @@ const ProductsPage: React.FC = () => {
       field: "available_quantity",
       headerName: "Stock",
       flex: 1.5,
-      valueFormatter: (p) => `${p.value} ${p.data.unit}`,
+      valueFormatter: (p) => `${p.value} ${p.data.unit_type}`,
     },
     {
-      field: "price",
+      field: "cost_price",
       headerName: "Price",
-      valueFormatter: (p) => `₹${Number(p.value).toFixed(2)} / ${p.data.unit}`,
+      valueFormatter: (p) =>
+        `₹${Number(p.value).toFixed(2)} / ${p.data.unit_type}`,
       flex: 2,
     },
     {

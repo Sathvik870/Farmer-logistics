@@ -12,7 +12,7 @@ exports.getAllPurchaseOrders = async (req, res) => {
                 po.supplier_name,
                 po.supplier_contact,
                 po.purchase_date,
-                SUM(poi.quantity * poi.price) AS total_amount
+                SUM(poi.quantity * poi.purchase_price) AS total_amount
             FROM purchase_orders po
             JOIN purchase_order_items poi ON po.purchase_id = poi.purchase_id
             GROUP BY po.purchase_id, po.purchase_code, po.supplier_name, po.supplier_contact, po.purchase_date
@@ -37,7 +37,7 @@ exports.getPurchaseOrderDetails = async (req, res) => {
                 poi.item_id,
                 poi.product_id,
                 poi.quantity,
-                poi.price as purchase_price,
+                poi.purchase_price,
                 p.product_code,
                 p.name as product_name,
                 p.category,

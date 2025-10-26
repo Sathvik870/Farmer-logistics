@@ -13,7 +13,8 @@ exports.getAllProducts = async (req, res) => {
         p.category, 
         COALESCE(p.description, 'N/A') as description,
         p.unit, 
-        p.price,
+        p.cost_price,
+        p.selling_price
         COALESCE(s.available_quantity, 0) as available_quantity
       FROM 
         products p
@@ -41,7 +42,7 @@ exports.getAllProducts = async (req, res) => {
 };
 
 exports.createProduct = async (req, res) => {
-  const { name, category, description, unit, price } = req.body;
+  const { name, category, description, unit, cost_price } = req.body;
   const imageBuffer = req.file?.buffer;
   if (req.file) {
     
@@ -59,7 +60,7 @@ exports.createProduct = async (req, res) => {
     }
   }
 
-  if (!name || !category || !unit || !price) {
+  if (!name || !category || !unit || !cost_price) {
     return res
       .status(400)
       .json({ message: "Please provide all required fields." });
@@ -71,7 +72,7 @@ exports.createProduct = async (req, res) => {
 
   try {
     const newProductQuery = `
-      INSERT INTO products (name, category, description, unit, price,product_image)
+      INSERT INTO products (name, category, description, unit, cost_price, product_image)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
@@ -81,7 +82,7 @@ exports.createProduct = async (req, res) => {
       category,
       description,
       unit,
-      price,
+      cost_price,
       imageBuffer,
     ]);
 
@@ -107,7 +108,7 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, category, description, unit, price } = req.body;
+    const { name, category, description, unit, cost_price } = req.body;
     const imageBuffer = req.file ? req.file.buffer : null;
     const imageMimeType = req.file ? req.file.mimetype : null;
     logger.info(`[PRODUCT] Attempting update request for product ID: ${id}.`);
@@ -116,7 +117,7 @@ exports.updateProduct = async (req, res) => {
       return res.status(400).json({ message: "Invalid product ID." });
     }
 
-    if (!name || !category || !unit || !price) {
+    if (!name || !category || !unit || !cost_price) {
       logger.warn(
         `[PRODUCT] Update failed for ID ${id}: Missing required fields.`
       );
@@ -138,10 +139,10 @@ exports.updateProduct = async (req, res) => {
       return res.status(400).json({ message: "Invalid unit." });
     }
 
-    if (isNaN(price) || Number(price) <= 0) {
+    if (isNaN(cost_price) || Number(cost_price) <= 0) {
       return res
         .status(400)
-        .json({ message: "Price must be a positive number." });
+        .json({ message: "Cost price must be a positive number." });
     }
 
     if (imageBuffer) {
@@ -166,7 +167,7 @@ exports.updateProduct = async (req, res) => {
     if (imageBuffer) {
       updateQuery = `
         UPDATE products
-        SET name = $1, category = $2, description = $3, unit = $4, price = $5, product_image = $6, updated_at = CURRENT_TIMESTAMP
+        SET name = $1, category = $2, description = $3, unit = $4, cost_price = $5, product_image = $6, updated_at = CURRENT_TIMESTAMP
         WHERE product_id = $7
         RETURNING *;
       `;
@@ -175,14 +176,14 @@ exports.updateProduct = async (req, res) => {
         category,
         description || null,
         unit,
-        price,
+        cost_price,
         imageBuffer,
         productId,
       ];
     } else {
       updateQuery = `
         UPDATE products
-        SET name = $1, category = $2, description = $3, unit = $4, price = $5, updated_at = CURRENT_TIMESTAMP
+        SET name = $1, category = $2, description = $3, unit = $4, cost_price = $5, updated_at = CURRENT_TIMESTAMP
         WHERE product_id = $6
         RETURNING *;
       `;
@@ -191,7 +192,7 @@ exports.updateProduct = async (req, res) => {
         category,
         description || null,
         unit,
-        price,
+        cost_price,
         productId,
       ];
     }
@@ -263,7 +264,7 @@ exports.getProductById = async (req, res) => {
     const query = `
       SELECT 
         p.product_id, p.product_code, p.name, p.category, p.description, 
-        p.unit, p.price, p.product_image,
+        p.unit, p.cost_price, p.selling_price, p.product_image,
         COALESCE(s.available_quantity, 0) as available_quantity
       FROM 
         products p

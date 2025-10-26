@@ -1,0 +1,196 @@
+Final Schemas:
+
+Table name : customers
+
+CREATE SEQUENCE  customer_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE FUNCTION  generate_customer_code() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.customer_code := 'CUST-' || LPAD(nextval('customer_code_seq')::TEXT, 4, '0');
+    RETURN NEW;
+END;
+$$;
+
+CREATE TABLE  customers (
+    customer_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_code character varying(20) NOT NULL UNIQUE,
+    first_name character varying(100) NOT NULL,
+    last_name character varying(100) NOT NULL,
+    email character varying(150) NOT NULL UNIQUE,
+    phone_number character varying(20),
+    address character varying(255),
+    city character varying(100),
+    state character varying(100),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER set_customer_code BEFORE INSERT ON  customers FOR EACH ROW WHEN ((new.customer_code IS NULL)) EXECUTE FUNCTION  generate_customer_code();
+
+
+Table name : products
+
+CREATE SEQUENCE  product_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE FUNCTION  generate_product_code() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.product_code := 'PROD-' || LPAD(nextval('product_code_seq')::TEXT, 4, '0');
+    RETURN NEW;
+END;
+$$;
+
+CREATE TABLE  products (
+    product_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_code character varying(20) NOT NULL UNIQUE,
+    product_name character varying(150) NOT NULL,
+    product_category character varying(50) NOT NULL,
+    product_description text,
+    unit_type character varying(20) NOT NULL,
+    cost_price numeric(10,2) NOT NULL,
+    selling_price numeric(10,2),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    added_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    product_image bytea
+);
+
+CREATE TRIGGER set_product_code BEFORE INSERT ON  products FOR EACH ROW WHEN ((new.product_code IS NULL)) EXECUTE FUNCTION  generate_product_code();
+
+
+Table name : sales_orders
+
+CREATE TABLE  sales_orders (
+    sales_order_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id integer NOT NULL,
+    order_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    status character varying(20) DEFAULT 'Pending'::character varying,
+    payment_status character varying(20) DEFAULT 'Unpaid'::character varying,
+    payment_method character varying(50),
+    payment_date timestamp without time zone,
+    CONSTRAINT sales_orders_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES  customers(customer_id) ON DELETE CASCADE
+);
+
+
+Table name : sales_order_items
+
+CREATE TABLE  sales_order_items (
+    item_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    sales_order_id integer NOT NULL,
+    product_id integer NOT NULL,
+    sold_quantity numeric(10,2) NOT NULL,
+    sold_price numeric(10,2) NOT NULL,
+    CONSTRAINT sales_order_items_sales_order_id_fkey FOREIGN KEY (sales_order_id) REFERENCES  sales_orders(sales_order_id) ON DELETE CASCADE,
+    CONSTRAINT sales_order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
+);
+
+
+Table name : purchase_orders
+
+CREATE SEQUENCE  purchase_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE FUNCTION  generate_purchase_code() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.purchase_code := 'PURCH-' || LPAD(nextval('purchase_code_seq')::TEXT, 4, '0');
+    RETURN NEW;
+END;
+$$;
+
+CREATE TABLE  purchase_orders (
+    purchase_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    purchase_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    supplier_name character varying(150),
+    supplier_contact character varying(50),
+    purchase_code character varying(20) UNIQUE
+);
+
+CREATE TRIGGER set_purchase_code BEFORE INSERT ON  purchase_orders FOR EACH ROW WHEN ((new.purchase_code IS NULL)) EXECUTE FUNCTION  generate_purchase_code();
+
+
+Table name : purchase_order_items
+
+CREATE TABLE  purchase_order_items (
+    item_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_id integer NOT NULL,
+    purchase_quantity numeric(10,2) NOT NULL,
+    purchase_price numeric(10,2) NOT NULL,
+    purchase_code character varying(20) NOT NULL,
+    CONSTRAINT purchase_order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE,
+    CONSTRAINT purchase_order_items_purchase_code_fkey FOREIGN KEY (purchase_code) REFERENCES  purchase_orders(purchase_code) ON DELETE CASCADE
+);
+
+
+Table name : stocks
+
+CREATE TABLE  stocks (
+    stock_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_id integer NOT NULL UNIQUE,
+    available_quantity numeric(10,2) DEFAULT 0,
+    last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT stocks_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
+);
+
+
+Table name : sales_stock
+
+CREATE TABLE  sales_stock (
+    sales_stock_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_id integer NOT NULL UNIQUE,
+    available_for_sale numeric(10,2) NOT NULL,
+    transferred_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT sales_stock_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
+);
+
+
+Table name : users
+
+CREATE TABLE  users (
+    user_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    username character varying(100) NOT NULL UNIQUE,
+    password character varying(255) NOT NULL,
+    email character varying(150) UNIQUE,
+    phone_number character varying(15) NOT NULL,
+    role character varying(20) NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    authorized boolean DEFAULT false,
+    first_name character varying(100),
+    last_name character varying(100),
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'superadmin'::character varying])::text[])))
+);
+
+
+View name : customer_order_history
+
+CREATE VIEW customer_order_history AS
+ SELECT so.sales_order_id,
+    so.customer_id,
+    (((c.first_name)::text || ' '::text) || (c.last_name)::text) AS customer_name,
+    so.order_date,
+    so.status,
+    p.product_name,
+    soi.sold_quantity AS quantity,
+    soi.sold_price AS price
+   FROM (((sales_orders so
+     JOIN customers c ON ((so.customer_id = c.customer_id)))
+     JOIN sales_order_items soi ON ((so.sales_order_id = soi.sales_order_id)))
+     JOIN products p ON ((soi.product_id = p.product_id)));

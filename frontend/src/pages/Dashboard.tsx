@@ -45,13 +45,13 @@ const allStatCards = [
   {
     type: "primary",
     title: "Total Revenue",
-    value: "$89,402",
+    value: "₹89,402",
     icon: <HiCash size={28} />,
     color: "bg-red-500",
   },
   {
     title: "Revenue This Month",
-    value: "$12,650",
+    value: "₹12,650",
     icon: <HiCash size={28} />, 
     color: "bg-blue-500",
   },

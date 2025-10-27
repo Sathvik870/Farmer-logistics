@@ -44,6 +44,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         product_description: "",
         unit_type: unitOptions[0],
         cost_price: 0,
+        selling_price: 0,
       });
       setPreviewUrl(null);
     }
@@ -150,87 +151,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
         </div>
 
         <div className="flex-grow overflow-y-auto">
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-x-6">
-              <div className="md:col-span-3 flex flex-col space-y-5">
-                <div>
-                  <label htmlFor="product_name" className={labelStyle}>
-                    Product Name
-                  </label>
-                  <input
-                    id="product_name"
-                    name="product_name"
-                    value={formData.product_name || ""}
-                    onChange={handleChange}
-                    required
-                    className={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="product_category" className={labelStyle}>
-                    Category
-                  </label>
-                  <select
-                    id="product_category"
-                    name="product_category"
-                    value={formData.product_category || ""}
-                    onChange={handleChange}
-                    className={inputStyle}
-                  >
-                    {categoryOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="unit_type" className={labelStyle}>
-                    Unit
-                  </label>
-                  <select
-                    id="unit_type"
-                    name="unit_type"
-                    value={formData.unit_type || ""}
-                    onChange={handleChange}
-                    className={inputStyle}
-                  >
-                    {unitOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="cost_price" className={labelStyle}>
-                    Cost Price
-                  </label>
-                  <input
-                    id="cost_price"
-                    name="cost_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.cost_price || 0}
-                    onChange={handleChange}
-                    required
-                    className={inputStyle}
-                  />
-                </div>
-                <div className="pt-2">
-                  <label htmlFor="product_description" className={labelStyle}>
-                    Description (Optional)
-                  </label>
-                  <input
-                    id="product_description"
-                    name="product_description"
-                    value={formData.product_description || ""}
-                    onChange={handleChange}
-                    className={`${inputStyle} w-full`}
-                  />
-                </div>
-              </div>
-              <div className="md:col-span-2 mt-6 md:mt-0 flex flex-col items-center justify-center">
+          <form onSubmit={handleSubmit} className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="md:row-span-4 flex flex-col items-center justify-start">
                 <input
                   id="productImage"
                   name="productImage"
@@ -240,11 +163,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   className="hidden"
                 />
                 {previewUrl ? (
-                  <div className="w-full text-center">
+                  <div className="w-full text-center h-full flex flex-col">
                     <img
                       src={previewUrl}
                       alt="Product Preview"
-                      className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
+                      className="w-full flex-grow object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
                       onClick={() => setIsLargePreviewOpen(true)}
                     />
                     <label
@@ -257,9 +180,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 ) : (
                   <label
                     htmlFor="productImage"
-                    className="w-full h-48 flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors"
+                    className="w-full h-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors"
                   >
-                    <svg
+                                        <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-12 w-12 text-gray-400"
                       fill="none"
@@ -291,6 +214,39 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     </p>
                   </label>
                 )}
+              </div>
+
+              <div>
+                <label htmlFor="product_name" className={labelStyle}>Product Name</label>
+                <input id="product_name" name="product_name" value={formData.product_name || ""} onChange={handleChange} required className={inputStyle} />
+              </div>
+              
+              <div>
+                <label htmlFor="product_category" className={labelStyle}>Category</label>
+                <select id="product_category" name="product_category" value={formData.product_category || ""} onChange={handleChange} className={inputStyle}>
+                  {categoryOptions.map((option) => (<option key={option} value={option}>{option}</option>))}
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="unit_type" className={labelStyle}>Unit</label>
+                <select id="unit_type" name="unit_type" value={formData.unit_type || ""} onChange={handleChange} className={inputStyle}>
+                  {unitOptions.map((option) => (<option key={option} value={option}>{option}</option>))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="cost_price" className={labelStyle}>Cost Price</label>
+                <input id="cost_price" name="cost_price" type="number" step="0.01" value={formData.cost_price || 0} onChange={handleChange} required className={inputStyle} />
+              </div>
+              
+              <div>
+                <label htmlFor="selling_price" className={labelStyle}>Selling Price</label>
+                <input id="selling_price" name="selling_price" type="number" step="0.01" value={formData.selling_price || 0} onChange={handleChange} required className={inputStyle} />
+              </div>
+              <div>
+                <label htmlFor="product_description" className={labelStyle}>Description (Optional)</label>
+                <input id="product_description" name="product_description" value={formData.product_description || ""} onChange={handleChange} className={`${inputStyle} w-full`} />
               </div>
             </div>
           </form>

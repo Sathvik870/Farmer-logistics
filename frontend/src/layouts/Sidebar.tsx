@@ -4,12 +4,13 @@ import { useAuth } from "../context/AuthContext";
 import userAvatar from "../assets/admin-user.svg";
 import {
   HiOutlineHome,
-  HiOutlineUsers,
+  // HiOutlineUsers,
   HiOutlineCalendar,
-  HiOutlineBriefcase,
+  // HiOutlineBriefcase,
   HiOutlineCog,
   HiOutlineLogout,
   HiOutlineShoppingBag,
+  // HiOutlineSwitchHorizontal,
 } from "react-icons/hi";
 
 interface SidebarProps {
@@ -17,19 +18,44 @@ interface SidebarProps {
 }
 
 const mainLinks = [
-  { name: "Dashboard", path: "/dashboard", icon: HiOutlineHome },
-  { name: "Products", path: "/products", icon: HiOutlineShoppingBag },
+  { 
+    name: "Dashboard", 
+    path: "/dashboard", 
+    icon: HiOutlineHome 
+  },
+  { 
+    name: "Products", 
+    path: "/products", 
+    icon: HiOutlineShoppingBag 
+  },
   {
     name: "Purchase orders",
     path: "/purchase-orders",
     icon: HiOutlineCalendar,
   },
-  { name: "Sales orders", path: "/sales-orders", icon: HiOutlineBriefcase },
-  { name: "Customers", path: "/customers", icon: HiOutlineUsers },
+  // {
+  //   name: "Sales Allocation",
+  //   path: "/sales-allocation",
+  //   icon: HiOutlineSwitchHorizontal,
+  // },
+  // { 
+  //   name: "Sales orders", 
+  //   path: "/sales-orders", 
+  //   icon: HiOutlineBriefcase 
+  // },
+  // { 
+  //   name: "Customers", 
+  //   path: "/customers", 
+  //   icon: HiOutlineUsers 
+  // },
 ];
 
 const secondaryLinks = [
-  { name: "Settings", path: "/settings", icon: HiOutlineCog },
+  { 
+    name: "Settings", 
+    path: "/settings", 
+    icon: HiOutlineCog 
+  },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
@@ -38,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/agentlogin");
   };
 
   return (
@@ -121,14 +147,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           <img
             src={userAvatar}
             alt="User Avatar"
-            className="w-8 h-8 rounded-full"
+            className="w-6 h-6 rounded-full"
           />
           <div
             className={`ml-3 whitespace-nowrap overflow-hidden transition-opacity duration-200 ${
               isOpen ? "opacity-100" : "opacity-0"
             }`}
           >
-            <p className="font-semibold text-lg">
+            <p className="font-semibold text-medium">
               {user ? `${user.first_name} ${user.last_name}` : "User"}
             </p>
             <p className="text-medium text-gray-500">

@@ -9,6 +9,7 @@ interface ProductDetails {
   product_description?: string;
   unit_type: string;
   cost_price: number;
+  selling_price: number;
   available_quantity: number;
   imageUrl?: string | null;
 }
@@ -106,22 +107,26 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
               <DetailRow label="Product Code" value={product.product_code} />
               <DetailRow label="Category" value={product.product_category} />
               <DetailRow
+                label="Total Stock"
+                value={`${product.available_quantity} ${product.unit_type}`}
+              />
+              <DetailRow
                 label="Cost Price"
                 value={`$${Number(product.cost_price).toFixed(2)} / ${
                   product.unit_type
                 }`}
               />
               <DetailRow
-                label="Available Stock"
-                value={`${product.available_quantity} ${product.unit_type}`}
+                label="Selling Price"
+                value={`$${Number(product.selling_price).toFixed(2)} / ${
+                  product.unit_type
+                }`}
               />
               <DetailRow label="Unit" value={product.unit_type} />
-              <div className="md:col-span-2">
-                <DetailRow
-                  label="Description"
-                  value={product.product_description}
-                />
-              </div>
+              <DetailRow
+                label="Description"
+                value={product.product_description}
+              />
             </div>
           </div>
         )}

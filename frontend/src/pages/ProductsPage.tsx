@@ -1,11 +1,23 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type {
+  ColDef,
+  ICellRendererParams,
+  GetRowIdParams,
+} from "ag-grid-community";
 import api from "../api";
 import { useAlert } from "../context/AlertContext";
 import ProductModal from "../components/ProductModal";
 import ProductViewModal from "../components/ProductViewModal";
-import { HiPencil, HiTrash, HiEye } from "react-icons/hi";
+import StockStepperCellRenderer from "../components/StockStepperCellRenderer";
+import {
+  HiPencil,
+  HiTrash,
+  HiEye,
+  HiOutlineRefresh,
+  HiX,
+  HiOutlineSwitchHorizontal,
+} from "react-icons/hi";
 
 export interface Product {
   product_id: number;
@@ -15,7 +27,9 @@ export interface Product {
   product_description?: string;
   unit_type: string;
   cost_price: number;
+  selling_price: number;
   available_quantity: number;
+  saleable_quantity: number;
 }
 
 export interface ProductWithImage extends Product {
@@ -33,10 +47,20 @@ const ProductsPage: React.FC = () => {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
     null
   );
-  const fetchProducts = async () => {
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const [dirtyRows, setDirtyRows] = useState<{
+    [productId: number]: {
+      saleable_quantity: number;
+      available_quantity: number;
+    };
+  }>({});
+
+  const fetchProducts = useCallback(async () => {
     try {
       const response = await api.get<Product[]>("/api/products");
       setRowData(response.data);
+      setDirtyRows({});
     } catch (error) {
       console.error("Failed to fetch products", error);
       showAlert(
@@ -44,11 +68,89 @@ const ProductsPage: React.FC = () => {
         "error"
       );
     }
-  };
+  }, [showAlert]);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
+
+  const handleQuantityChange = useCallback(
+    (productId: number, newSaleableQuantity: number) => {
+      const originalProduct = rowData.find((p) => p.product_id === productId);
+      if (!originalProduct) return;
+
+      const totalStock =
+        Number(originalProduct.available_quantity) +
+        Number(originalProduct.saleable_quantity);
+
+      let finalSaleableQuantity = Math.floor(newSaleableQuantity);
+
+      if (finalSaleableQuantity < 0) {
+        finalSaleableQuantity = 0;
+      }
+      if (finalSaleableQuantity > totalStock) {
+        finalSaleableQuantity = totalStock;
+      }
+
+      if (finalSaleableQuantity === Number(originalProduct.saleable_quantity)) {
+        setDirtyRows((prev) => {
+          if (!prev[productId]) {
+            return prev;
+          }
+          const newDirtyRows = { ...prev };
+          delete newDirtyRows[productId];
+          return newDirtyRows;
+        });
+        return;
+      }
+
+      const newAvailableQuantity = totalStock - finalSaleableQuantity;
+
+      setDirtyRows((prev) => ({
+        ...prev,
+        [productId]: {
+          saleable_quantity: finalSaleableQuantity,
+          available_quantity: newAvailableQuantity,
+        },
+      }));
+    },
+    [rowData, showAlert]
+  );
+
+  const handleBatchUpdate = useCallback(async () => {
+    const payload = Object.entries(dirtyRows).map(
+      ([productId, quantities]) => ({
+        product_id: Number(productId),
+        ...quantities,
+      })
+    );
+
+    if (payload.length === 0) return;
+
+    try {
+      await api.put("/api/stock/batch-update", { updates: payload });
+      showAlert("Stock levels updated successfully!", "success");
+      setIsEditMode(false);
+      fetchProducts();
+    } catch (error: any) {
+      showAlert(
+        error.response?.data?.message || "Failed to update stock.",
+        "error"
+      );
+    }
+  }, [dirtyRows, showAlert]);
+
+  const displayRowData = useMemo(() => {
+    if (Object.keys(dirtyRows).length === 0) return rowData;
+    return rowData.map((row) =>
+      dirtyRows[row.product_id] ? { ...row, ...dirtyRows[row.product_id] } : row
+    );
+  }, [rowData, dirtyRows]);
+
+  const handleCancel = () => {
+    setDirtyRows({});
+    setIsEditMode(false);
+  };
 
   const handleOpenViewModal = (productId: number) => {
     setSelectedProductId(productId);
@@ -124,40 +226,65 @@ const ProductsPage: React.FC = () => {
     </div>
   );
 
-  const [columnDefs] = useState<ColDef[]>([
-    { field: "product_code", headerName: "Code", flex: 1.5, sortable: true },
-    { field: "product_name", headerName: "Product Name", flex: 2.5 },
-    { field: "product_category", headerName: "Category", flex: 2 },
-    {
-      field: "product_description",
-      headerName: "Description",
-      flex: 3,
-      wrapText: true,
-      autoHeight: true,
-      valueFormatter: (params) => (params.value ? params.value : "N/A"),
-    },
-    {
-      field: "available_quantity",
-      headerName: "Stock",
-      flex: 1.5,
-      valueFormatter: (p) => `${p.value} ${p.data.unit_type}`,
-    },
-    {
-      field: "cost_price",
-      headerName: "Price",
-      valueFormatter: (p) =>
-        `₹${Number(p.value).toFixed(2)} / ${p.data.unit_type}`,
-      flex: 2,
-    },
-    {
-      field: "actions",
-      headerName: "Actions",
-      cellRenderer: ActionsCellRenderer,
-      flex: 1.5,
-      filter: false,
-      sortable: false,
-    },
-  ]);
+  const columnDefs = useMemo<ColDef[]>(
+    () => [
+      {
+        field: "product_code",
+        headerName: "Code",
+        flex: 1.2,
+        sortable: true,
+      },
+      {
+        field: "product_name",
+        headerName: "Product Name",
+        flex: 1.5,
+      },
+      {
+        field: "product_category",
+        headerName: "Category",
+        flex: 1.2,
+      },
+      {
+        field: "available_quantity",
+        headerName: "Total Stock",
+        flex: 1.5,
+        valueFormatter: (p) => `${p.value} ${p.data.unit_type}`,
+      },
+      {
+        field: "saleable_quantity",
+        headerName: "Stock for Sales",
+        flex: 1.5,
+        cellRenderer: StockStepperCellRenderer,
+        cellRendererParams: {
+          onQuantityChange: handleQuantityChange,
+          isEditMode: isEditMode,
+        },
+      },
+      {
+        field: "cost_price",
+        headerName: "Cost Price",
+        valueFormatter: (p) =>
+          `₹${Number(p.value).toFixed(2)} / ${p.data.unit_type}`,
+        flex: 1.5,
+      },
+      {
+        field: "selling_price",
+        headerName: "Selling Price",
+        valueFormatter: (p) =>
+          `₹${Number(p.value).toFixed(2)} / ${p.data.unit_type}`,
+        flex: 1.5,
+      },
+      {
+        field: "actions",
+        headerName: "Actions",
+        cellRenderer: ActionsCellRenderer,
+        flex: 1.5,
+        filter: false,
+        sortable: false,
+      },
+    ],
+    [handleQuantityChange, isEditMode]
+  );
 
   const defaultColDef = useMemo(
     () => ({
@@ -169,16 +296,63 @@ const ProductsPage: React.FC = () => {
     []
   );
 
+  const getRowId = useMemo(() => {
+    return (params: GetRowIdParams) => params.data.product_id;
+  }, []);
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Products</h1>
-        <button
-          onClick={() => handleOpenEditModal(null)}
-          className="flex gap-3 text-lg cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center"
-        >
-          + Add New Product
-        </button>
+        <div className="flex items-center gap-4">
+          {!isEditMode ? (
+            <button
+              onClick={() => setIsEditMode(true)}
+              className="flex gap-3 text-lg cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center"
+            >
+              <HiOutlineSwitchHorizontal size={20} /> Manage Stocks
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCancel}
+                className="flex justify-center items-center text-white font-semibold bg-gradient-to-r from-[#e30000] to-[#b30000] w-12 h-12 rounded-full border border-[#e30000] hover:scale-110 duration-200"
+              >
+                <HiX size={22} />
+              </button>
+              <button
+                onClick={handleBatchUpdate}
+                disabled={Object.keys(dirtyRows).length === 0}
+                className={`flex gap-3 text-lg font-semibold px-7 py-3 rounded-full border justify-center items-center transition-all duration-200
+                  ${
+                    Object.keys(dirtyRows).length > 0
+                      ? "bg-gradient-to-r from-[#144a31] to-[#387c40] text-white border-[#144a31] hover:scale-105 cursor-pointer"
+                      : "bg-[#618172] text-white cursor-not-allowed"
+                  }`}
+              >
+                <HiOutlineRefresh
+                  size={22}
+                  className={`${
+                    Object.keys(dirtyRows).length > 0
+                      ? "text-white"
+                      : "text-white"
+                  } transition-transform duration-300 ${
+                    Object.keys(dirtyRows).length > 0
+                      ? "group-hover:rotate-180"
+                      : ""
+                  }`}
+                />
+                Update Changes
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => handleOpenEditModal(null)}
+            className="flex gap-3 text-lg cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center"
+          >
+            + Add New Product
+          </button>
+        </div>
       </div>
 
       <div
@@ -186,9 +360,10 @@ const ProductsPage: React.FC = () => {
         style={{ height: 600, width: "100%" }}
       >
         <AgGridReact
-          rowData={rowData}
+          rowData={displayRowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
+          getRowId={getRowId}
           pagination={true}
           paginationPageSize={15}
           paginationPageSizeSelector={[15, 20, 50, 100]}

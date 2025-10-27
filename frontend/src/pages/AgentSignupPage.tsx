@@ -77,7 +77,7 @@ const Signup: React.FC = () => {
         password: "",
         confirmPassword: "",
       });
-    } catch (err: any) {
+    } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "An unexpected error occurred.");
       } else {
@@ -121,7 +121,7 @@ const Signup: React.FC = () => {
                 {successMessage}
               </p>
               <Link
-                to="/login"
+                to="/agentlogin"
                 className="text-lg text-[#387c40] hover:text-[#144a31] font-semibold"
               >
                 Back to Login
@@ -272,16 +272,16 @@ const Signup: React.FC = () => {
               >
                 {isLoading ? "Signing Up..." : "Sign Up"}
               </button>
-
+              {/* 
               <p className="text-center text-lg text-black">
                 Already have an account?{" "}
                 <Link
-                  to="/login"
+                  to="/agentlogin"
                   className="text-lg text-[#387c40] hover:text-[#144a31]"
                 >
                   Login
                 </Link>
-              </p>
+              </p> */}
             </form>
           )}
         </div>

@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff } from "react-icons/hi";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { 
+  useNavigate, 
+  // Link 
+} from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import loginImage from "../assets/login-page-bg.png";
@@ -32,7 +35,7 @@ const Login: React.FC = () => {
       });
       login(response.data);
       navigate("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "An unexpected error occurred.");
       } else {
@@ -129,7 +132,7 @@ const Login: React.FC = () => {
             </button>
           </form>
 
-          <p className="text-center text-lg text-black">
+          {/* <p className="text-center text-lg text-black">
             Don't have an account?{" "}
             <Link
               to="/signup"
@@ -137,7 +140,7 @@ const Login: React.FC = () => {
             >
               Sign Up
             </Link>
-          </p>
+          </p> */}
         </div>
       </div>
     </div>

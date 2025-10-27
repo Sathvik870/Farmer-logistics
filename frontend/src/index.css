@@ -4,6 +4,17 @@
 /* secondary : #f7f7f7 */
 /* accent : #ffffff */
 
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* For Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .mukta-malar-extralight {
   font-family: "Mukta Malar", sans-serif;
   font-weight: 200;

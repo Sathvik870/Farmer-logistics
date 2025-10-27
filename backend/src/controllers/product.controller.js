@@ -11,11 +11,12 @@ exports.getAllProducts = async (req, res) => {
         p.product_code, 
         p.product_name, 
         p.product_category,
-        COALESCE(p.product_description, 'N/A') as product_description,
+        p.product_description,
         p.unit_type,
         p.cost_price,
         p.selling_price,
-        COALESCE(s.available_quantity, 0) as available_quantity
+        COALESCE(s.available_quantity, 0) as available_quantity,
+        COALESCE(s.saleable_quantity, 0) as saleable_quantity
       FROM 
         products p
       LEFT JOIN 
@@ -48,6 +49,7 @@ exports.createProduct = async (req, res) => {
     product_description,
     unit_type,
     cost_price,
+    selling_price
   } = req.body;
   const imageBuffer = req.file?.buffer;
   if (req.file) {
@@ -75,8 +77,8 @@ exports.createProduct = async (req, res) => {
 
   try {
     const newProductQuery = `
-      INSERT INTO products (product_name, product_category, product_description, unit_type, cost_price, product_image)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO products (product_name, product_category, product_description, unit_type, cost_price, product_image, selling_price)
+      VALUES ($1, $2, $3, $4, $5, $6 ,$7)
       RETURNING *;
     `;
 
@@ -87,6 +89,7 @@ exports.createProduct = async (req, res) => {
       unit_type,
       cost_price,
       imageBuffer,
+      selling_price
     ]);
 
     const { product_image, ...productData } = rows[0];
@@ -117,6 +120,7 @@ exports.updateProduct = async (req, res) => {
       product_description,
       unit_type,
       cost_price,
+      selling_price
     } = req.body;
     const imageBuffer = req.file ? req.file.buffer : null;
     const imageMimeType = req.file ? req.file.mimetype : null;
@@ -157,6 +161,12 @@ exports.updateProduct = async (req, res) => {
         .json({ message: "Cost price must be a positive number." });
     }
 
+    if (isNaN(selling_price) || Number(selling_price) <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Selling price must be a positive number." });
+    }
+
     if (imageBuffer) {
       const allowedTypes = ["image/jpeg", "image/png"];
       if (!allowedTypes.includes(imageMimeType)) {
@@ -179,7 +189,24 @@ exports.updateProduct = async (req, res) => {
     if (imageBuffer) {
       updateQuery = `
         UPDATE products
-        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, product_image = $6, updated_at = CURRENT_TIMESTAMP
+        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, selling_price = $6, product_image = $7, updated_at = CURRENT_TIMESTAMP
+        WHERE product_id = $8
+        RETURNING *;
+      `;
+      queryParams = [
+        product_name,
+        product_category,
+        product_description || null,
+        unit_type,
+        cost_price,
+        selling_price,
+        imageBuffer,
+        productId,
+      ];
+    } else {
+      updateQuery = `
+        UPDATE products
+        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, selling_price = $6, updated_at = CURRENT_TIMESTAMP
         WHERE product_id = $7
         RETURNING *;
       `;
@@ -189,22 +216,7 @@ exports.updateProduct = async (req, res) => {
         product_description || null,
         unit_type,
         cost_price,
-        imageBuffer,
-        productId,
-      ];
-    } else {
-      updateQuery = `
-        UPDATE products
-        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, updated_at = CURRENT_TIMESTAMP
-        WHERE product_id = $6
-        RETURNING *;
-      `;
-      queryParams = [
-        product_name,
-        product_category,
-        product_description || null,
-        unit_type,
-        cost_price,
+        selling_price,
         productId,
       ];
     }

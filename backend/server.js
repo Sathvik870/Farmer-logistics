@@ -8,6 +8,7 @@ const authRoutes = require("./src/routes/auth.routes");
 const userRoutes = require("./src/routes/user.routes");
 const productRoutes = require("./src/routes/product.routes");
 const purchaseRoutes = require("./src/routes/purchase.routes");
+const stockRoutes = require("./src/routes/stock.routes");
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/purchase-orders", purchaseRoutes);
+app.use("/api/stock", stockRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

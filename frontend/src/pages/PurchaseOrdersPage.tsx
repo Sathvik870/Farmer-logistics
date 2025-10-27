@@ -270,7 +270,7 @@ const AccordionRow: React.FC<{
       setLoadingItems(true);
       try {
         const response = await api.get<PurchaseOrderItem[]>(
-          `/api/purchase-orders/${order.purchase_code}/items`
+          `/api/purchase-orders/${order.purchase_code}/details`
         );
         setItems(response.data);
       } catch (error) {

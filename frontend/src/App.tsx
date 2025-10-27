@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AlertProvider } from "./context/AlertContext";
-import LoginPage from "./pages/LoginPage";
-import Signup from "./pages/SignupPage";
+import LoginPage from "./pages/AgentLoginPage";
+import Signup from "./pages/AgentSignupPage";
 import Dashboard from "./pages/Dashboard";
 import ProductsPage from "./pages/ProductsPage";
 import RootRedirect from "./pages/RootRedirect";
@@ -18,8 +18,8 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/agentlogin" element={<LoginPage />} />
+            <Route path="/agentsignup" element={<Signup />} />
             {/* ProtectedRoutes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<MainLayout />}>

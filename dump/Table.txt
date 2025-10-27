@@ -145,20 +145,11 @@ CREATE TABLE  stocks (
     stock_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id integer NOT NULL UNIQUE,
     available_quantity numeric(10,2) DEFAULT 0,
+    saleable_quantity numeric(10,2) DEFAULT 0,
     last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT stocks_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
 );
 
-
-Table name : sales_stock
-
-CREATE TABLE  sales_stock (
-    sales_stock_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    product_id integer NOT NULL UNIQUE,
-    available_for_sale numeric(10,2) NOT NULL,
-    transferred_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT sales_stock_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
-);
 
 
 Table name : users

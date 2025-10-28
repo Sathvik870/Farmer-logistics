@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import api from "../api";
-import { useAlert } from "../context/AlertContext";
+import api from "../../api";
+import { useAlert } from "../../context/AlertContext";
 import { HiPlus, HiTrash, HiX } from "react-icons/hi";
 
 const labelStyle = "block text-md text-black mb-1 text-left";

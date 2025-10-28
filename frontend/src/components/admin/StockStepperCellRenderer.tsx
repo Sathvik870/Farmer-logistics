@@ -1,7 +1,7 @@
 import React from "react";
 import type { ICellRendererParams } from "ag-grid-community";
 import { HiPlus, HiMinus } from "react-icons/hi";
-import type { Product } from "../pages/ProductsPage";
+import type { Product } from "../../pages/admin/ProductsPage";
 
 interface IStockStepperProps extends ICellRendererParams {
   data: Product;

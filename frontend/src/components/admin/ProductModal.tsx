@@ -1,7 +1,7 @@
-import { useAlert } from "../context/AlertContext";
-import api from "../api";
+import { useAlert } from "../../context/AlertContext";
+import api from "../../api";
 import React, { useState, useEffect } from "react";
-import type { ProductWithImage as Product } from "../pages/ProductsPage";
+import type { ProductWithImage as Product } from "../../pages/admin/ProductsPage";
 import { HiX } from "react-icons/hi";
 
 interface ProductModalProps {

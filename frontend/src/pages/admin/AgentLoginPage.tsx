@@ -6,10 +6,10 @@ import {
   useNavigate, 
   // Link 
 } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import api from "../api";
-import loginImage from "../assets/login-page-bg.png";
-import logo from "../assets/main-logo.jpg";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../api";
+import loginImage from "../../assets/login-page-bg.png";
+import logo from "../../assets/main-logo.jpg";
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();

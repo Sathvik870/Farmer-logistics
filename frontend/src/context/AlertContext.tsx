@@ -1,7 +1,7 @@
 import { createContext, useState, useContext } from "react";
 import type { ReactNode } from "react";
-import AlertModal from "../components/AlertModal";
-import type { AlertType } from "../components/AlertModal";
+import AlertModal from "../components/common/AlertModal";
+import type { AlertType } from "../components/common/AlertModal";
 
 interface AlertState {
   isOpen: boolean;

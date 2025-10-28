@@ -5,11 +5,11 @@ import type {
   ICellRendererParams,
   GetRowIdParams,
 } from "ag-grid-community";
-import api from "../api";
-import { useAlert } from "../context/AlertContext";
-import ProductModal from "../components/ProductModal";
-import ProductViewModal from "../components/ProductViewModal";
-import StockStepperCellRenderer from "../components/StockStepperCellRenderer";
+import api from "../../api";
+import { useAlert } from "../../context/AlertContext";
+import ProductModal from "../../components/admin/ProductModal";
+import ProductViewModal from "../../components/admin/ProductViewModal";
+import StockStepperCellRenderer from "../../components/admin/StockStepperCellRenderer";
 import {
   HiPencil,
   HiTrash,

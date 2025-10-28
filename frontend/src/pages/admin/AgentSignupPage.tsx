@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import api from "../api";
+import api from "../../api";
 
-import loginImage from "../assets/login-page-bg.png";
+import loginImage from "../../assets/login-page-bg.png";
 import {
   HiUser,
   HiLockClosed,

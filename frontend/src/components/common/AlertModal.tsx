@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import SuccessIcon from "../assets/success.svg";
-import ErrorIcon from "../assets/error.svg";
-import WarningIcon from "../assets/warning.svg";
+import SuccessIcon from "../../assets/success.svg";
+import ErrorIcon from "../../assets/error.svg";
+import WarningIcon from "../../assets/warning.svg";
 export type AlertType = "success" | "error" | "warning";
 
 interface AlertModalProps {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import api from "../api";
-import { useAlert } from "../context/AlertContext";
+import api from "../../api";
+import { useAlert } from "../../context/AlertContext";
 import {
   HiPlus,
   HiChevronDown,
@@ -9,7 +9,7 @@ import {
   HiArrowSmUp,
   HiArrowSmDown,
 } from "react-icons/hi";
-import AddPurchaseOrderModal from "../components/AddPurchaseOrderModal";
+import AddPurchaseOrderModal from "../../components/admin/AddPurchaseOrderModal";
 
 interface PurchaseOrder {
   purchase_id: number;

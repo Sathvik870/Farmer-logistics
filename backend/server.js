@@ -76,7 +76,7 @@ customerRouter.use("/users", customerUserRoutes);
 app.use("/api/customer", customerRouter);
 
 app.get("/", (req, res) => {
-  res.send("");
+  res.send("Hello there! Welcome to the Farmer Logistics Backend Server.");
 });
 
 app.listen(PORT, HOST, () => {

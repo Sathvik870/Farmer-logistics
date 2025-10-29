@@ -91,7 +91,7 @@ const CustomerSignupPage: React.FC = () => {
         "profile",
       ].join(" "),
       ux_mode: "popup",
-      callback: async (response) => {
+      callback: async (response: any) => {
         try {
           const res = await api.post("/api/customer/auth/google-signup", {
             code: response.code,

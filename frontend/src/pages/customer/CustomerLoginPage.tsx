@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
       client_id: GOOGLE_CLIENT_ID,
       scope: ["openid", "email", "profile"].join(" "),
       ux_mode: "popup",
-      callback: async (response) => {
+      callback: async (response: any) => {
         setIsLoading(true);
         setError(null);
         try {

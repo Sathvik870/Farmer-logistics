@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import Cookies from "js-cookie";
 import api from "../../api";
 
 import { CustomerAuthContext, type Customer } from "./CustomerAuthContext.ts";
@@ -11,7 +10,7 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const token = Cookies.get("customerAuthToken");
+      const token = localStorage.getItem("customerAuthToken");
       if (token) {
         try {
           const response = await api.get<Customer>(
@@ -20,8 +19,8 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
           setCustomer(response.data);
         } catch (error) {
           console.error("Failed to fetch customer profile", error);
+          localStorage.removeItem("customerAuthToken");
           setCustomer(null);
-          Cookies.remove("customerAuthToken");
         }
       }
       setIsLoading(false);
@@ -30,13 +29,7 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (token: string) => {
-    const isProduction = import.meta.env.PROD;
-
-    Cookies.set("customerAuthToken", token, {
-      expires: 5,
-      secure: isProduction,
-      sameSite: "Lax",
-    });
+    localStorage.setItem("customerAuthToken", token);
     try {
       const response = await api.get<Customer>("/api/customer/users/profile");
       setCustomer(response.data);
@@ -46,7 +39,7 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    Cookies.remove("customerAuthToken");
+    localStorage.removeItem("customerAuthToken");
     setCustomer(null);
   };
 

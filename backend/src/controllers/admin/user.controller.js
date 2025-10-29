@@ -2,7 +2,7 @@ const db = require("../../config/db");
 const logger = require("../../config/logger");
 
 exports.getUserProfile = async (req, res) => {
-  const user_id = req.user.user_id;
+  const user_id = req.admin.user_id;
   logger.info(`[USER] Attempting to fetch profile for user ID: ${user_id}`);
   try {
     const { rows } = await db.query(

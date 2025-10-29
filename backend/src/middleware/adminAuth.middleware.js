@@ -2,36 +2,26 @@ const jwt = require("jsonwebtoken");
 const logger = require("../config/logger");
 
 const protect = (req, res, next) => {
-  try {
-    const token = req.cookies.adminAuthToken;
-    logger.info(`[AUTH_MIDDLEWARE] Checking for admin auth token in cookies.`);
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
-        req.user = decoded;
-        next();
-        logger.info(
-          `[AUTH_MIDDLEWARE] Token verified successfully for user: ${decoded.username}`
-        );
-      } catch (error) {
-        logger.error(
-          `[AUTH_MIDDLEWARE] Token verification failed: ${error.message}`
-        );
-        return res
-          .status(401)
-          .json({ message: "Not authorized, token failed" });
-      }
-    } else {
-      logger.warn(
-        "[AUTH_MIDDLEWARE] Access denied: No token provided in cookies."
-      );
-      return res.status(401).json({ message: "Not authorized, no token" });
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+    try {
+      token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
+      req.admin = decoded;
+      
+      logger.info(`[ADMIN_AUTH_MIDDLEWARE] Token verified for admin: ${decoded.username}`);
+      
+      next();
+
+    } catch (error) {
+      logger.error(`[ADMIN_AUTH_MIDDLEWARE] Token verification failed: ${error.message}`);
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
-  } catch (error) {
-    logger.error(`[AUTH_MIDDLEWARE] Server error: ${error.message}`);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+  }
+
+  if (!token) {
+    logger.warn("[ADMIN_AUTH_MIDDLEWARE] Access denied: No token in header.");
+    return res.status(401).json({ message: "Not authorized, no token" });
   }
 };
 

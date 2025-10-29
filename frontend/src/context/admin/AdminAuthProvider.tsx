@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import Cookies from "js-cookie";
 import type { ReactNode } from "react";
 import api from "../../api.ts";
 
@@ -11,15 +10,15 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const token = Cookies.get("adminAuthToken");
+      const token = localStorage.getItem("adminAuthToken");
       if (token) {
         try {
           const response = await api.get<Admin>("/api/admin/users/profile");
           setAdmin(response.data);
         } catch (error) {
           console.error("Failed to fetch admin profile", error);
+          localStorage.removeItem("adminAuthToken");
           setAdmin(null);
-          Cookies.remove("adminAuthToken");
         }
       }
       setIsLoading(false);
@@ -28,12 +27,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (token: string) => {
-    const isProduction = import.meta.env.PROD;
-
-    Cookies.set("adminAuthToken", token, {
-      secure: isProduction,
-      sameSite: "Lax",
-    });
+    localStorage.setItem("adminAuthToken", token);
     try {
       const response = await api.get<Admin>("/api/admin/users/profile");
       setAdmin(response.data);
@@ -43,7 +37,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    Cookies.remove("adminAuthToken");
+    localStorage.removeItem("adminAuthToken");
     setAdmin(null);
   };
 

@@ -1,4 +1,4 @@
-import { useAlert } from "../../context/AlertContext";
+import { useAlert } from "../../context/common/AlertContext";
 import api from "../../api";
 import React, { useState, useEffect } from "react";
 import type { ProductWithImage as Product } from "../../pages/admin/ProductsPage";

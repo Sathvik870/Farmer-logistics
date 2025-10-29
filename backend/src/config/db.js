@@ -44,7 +44,7 @@ const pool = new Pool({
   ssl: false,
 });
 
-logger.info("[DB] Database pool created with SSL configuration");
+// logger.info("[DB] Database pool created with SSL configuration");
 
 module.exports = {
   query: (text, params) => pool.query(text, params),

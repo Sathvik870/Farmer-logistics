@@ -6,13 +6,13 @@ import {
   useNavigate, 
   // Link 
 } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAdminAuth } from "../../context/admin/useAdminAuth";
 import api from "../../api";
 import loginImage from "../../assets/login-page-bg.png";
 import logo from "../../assets/main-logo.jpg";
-const Login: React.FC = () => {
+const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAdminAuth();
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -20,7 +20,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/admin/dashboard");
     }
   }, [isAuthenticated, navigate]);
   const handleSubmit = async (e: FormEvent) => {
@@ -29,12 +29,18 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const response = await api.post("/api/auth/login", {
+      const response = await api.post("/api/admin/auth/login", {
         username,
         password,
       });
-      login(response.data);
-      navigate("/dashboard");
+
+      if (response.data && response.data.token) {
+      await login(response.data.token);
+      navigate("/admin/dashboard");
+    } else {
+      setError("Login succeeded but no token was returned from the server.");
+    }
+
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "An unexpected error occurred.");
@@ -147,4 +153,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default AdminLogin;

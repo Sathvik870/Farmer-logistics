@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import api from "../../api";
-import { useAlert } from "../../context/AlertContext";
+import { useAlert } from "../../context/common/AlertContext";
 import {
   HiPlus,
   HiChevronDown,
@@ -50,7 +50,7 @@ const PurchaseOrdersPage: React.FC = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await api.get<PurchaseOrder[]>("/api/purchase-orders");
+      const response = await api.get<PurchaseOrder[]>("/api/admin/purchase-orders");
       setOrders(response.data);
     } catch (error) {
       showAlert("Failed to load purchase orders.", "error");

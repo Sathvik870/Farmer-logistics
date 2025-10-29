@@ -7,8 +7,8 @@ const {
   updateProduct,
   deleteProduct,
   getProductById,
-} = require("../controllers/product.controller");
-const { protect } = require("../middleware/auth.middleware");
+} = require("../../controllers/admin/product.controller");
+const { protect } = require("../../middleware/adminAuth.middleware");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });

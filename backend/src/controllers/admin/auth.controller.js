@@ -1,7 +1,7 @@
-const db = require("../config/db");
+const db = require("../../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const logger = require("../config/logger");
+const logger = require("../../config/logger");
 
 exports.signup = async (req, res) => {
   logger.info(`[AUTH] Signup attempt for ${req.body.username || "unknown"}.`);
@@ -107,12 +107,10 @@ exports.signup = async (req, res) => {
           "Duplicate entry detected. Please use a different username or email already taken",
       });
     }
-    res
-      .status(500)
-      .json({
-        message: "Internal server error. Please try again later.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Internal server error. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
@@ -186,23 +184,22 @@ exports.login = async (req, res) => {
       role: user.role,
     };
 
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: "5d",
-    });
-
-    res.cookie("authToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 5 * 24 * 60 * 60 * 1000,
+    const token = jwt.sign(tokenPayload, process.env.ADMIN_JWT_SECRET, {
+      expiresIn: "1h",
     });
 
     logger.info(`[AUTH] Login successful for user: ${username}`);
 
     res.status(200).json({
-      user_id: user.user_id,
-      username: user.username,
-      role: user.role,
+      message: "Admin login successful!",
+      token: token,
+      admin: {
+        user_id: user.user_id,
+        username: user.username,
+        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
     });
   } catch (error) {
     logger.error(

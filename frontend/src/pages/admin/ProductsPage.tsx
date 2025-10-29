@@ -6,7 +6,7 @@ import type {
   GetRowIdParams,
 } from "ag-grid-community";
 import api from "../../api";
-import { useAlert } from "../../context/AlertContext";
+import { useAlert } from "../../context/common/AlertContext";
 import ProductModal from "../../components/admin/ProductModal";
 import ProductViewModal from "../../components/admin/ProductViewModal";
 import StockStepperCellRenderer from "../../components/admin/StockStepperCellRenderer";
@@ -58,7 +58,7 @@ const ProductsPage: React.FC = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const response = await api.get<Product[]>("/api/products");
+      const response = await api.get<Product[]>("/api/admin/products");
       setRowData(response.data);
       setDirtyRows({});
     } catch (error) {
@@ -128,7 +128,7 @@ const ProductsPage: React.FC = () => {
     if (payload.length === 0) return;
 
     try {
-      await api.put("/api/stock/batch-update", { updates: payload });
+      await api.put("/api/admin/stock/batch-update", { updates: payload });
       showAlert("Stock levels updated successfully!", "success");
       setIsEditMode(false);
       fetchProducts();
@@ -163,7 +163,7 @@ const ProductsPage: React.FC = () => {
     } else {
       try {
         const response = await api.get<ProductWithImage>(
-          `/api/products/${productId}`
+          `/api/admin/products/${productId}`
         );
         setProductToEdit(response.data);
       } catch (error) {
@@ -185,7 +185,7 @@ const ProductsPage: React.FC = () => {
   const handleDeleteProduct = (productId: number) => {
     const performDelete = async () => {
       try {
-        await api.delete(`/api/products/${productId}`);
+        await api.delete(`/api/admin/products/${productId}`);
         showAlert("Product deleted successfully!", "success");
         fetchProducts();
       } catch (error) {

@@ -63,7 +63,7 @@ const Signup: React.FC = () => {
         role: "admin",
       };
 
-      await api.post("/api/auth/signup", apiPayload);
+      await api.post("/api/admin/auth/signup", apiPayload);
 
       setSuccessMessage(
         "Thank you for your interest! Your account requires confirmation from a superior before you can log in."

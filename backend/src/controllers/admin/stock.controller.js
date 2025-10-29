@@ -1,5 +1,5 @@
-const db = require("../config/db");
-const logger = require("../config/logger");
+const db = require("../../config/db");
+const logger = require("../../config/logger");
 
 exports.batchUpdateStock = async (req, res) => {
   const { updates } = req.body;

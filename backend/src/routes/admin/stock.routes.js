@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { batchUpdateStock } = require("../controllers/stock.controller");
-const { protect } = require("../middleware/auth.middleware");
+const { batchUpdateStock } = require("../../controllers/admin/stock.controller");
+const { protect } = require("../../middleware/adminAuth.middleware");
 
 router.use(protect);
 

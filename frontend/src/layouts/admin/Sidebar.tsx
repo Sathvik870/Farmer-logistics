@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import userAvatar from "../assets/admin-user.svg";
+import { useAdminAuth } from "../../context/admin/useAdminAuth";
+import userAvatar from "../../assets/admin-user.svg";
 import {
   HiOutlineHome,
   // HiOutlineUsers,
@@ -20,17 +20,17 @@ interface SidebarProps {
 const mainLinks = [
   { 
     name: "Dashboard", 
-    path: "/dashboard", 
+    path: "/admin/dashboard", 
     icon: HiOutlineHome 
   },
   { 
     name: "Products", 
-    path: "/products", 
+    path: "/admin/products", 
     icon: HiOutlineShoppingBag 
   },
   {
     name: "Purchase orders",
-    path: "/purchase-orders",
+    path: "/admin/purchase-orders",
     icon: HiOutlineCalendar,
   },
   // {
@@ -53,18 +53,18 @@ const mainLinks = [
 const secondaryLinks = [
   { 
     name: "Settings", 
-    path: "/settings", 
+    path: "/admin/settings", 
     icon: HiOutlineCog 
   },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
-  const { user, logout } = useAuth();
+  const { admin, logout } = useAdminAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
-    navigate("/agentlogin");
+    navigate("/admin/login");
   };
 
   return (
@@ -155,10 +155,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             }`}
           >
             <p className="font-semibold text-medium">
-              {user ? `${user.first_name} ${user.last_name}` : "User"}
+              {admin ? `${admin.first_name} ${admin.last_name}` : "Admin"}
             </p>
             <p className="text-medium text-gray-500">
-              {user?.role || "Designation"}
+              {admin?.role || "Designation"}
             </p>
           </div>
           <button

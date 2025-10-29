@@ -4,11 +4,16 @@ const cors = require("cors");
 const os = require("os");
 const cookieParser = require("cookie-parser");
 const logger = require("./src/config/logger");
-const authRoutes = require("./src/routes/auth.routes");
-const userRoutes = require("./src/routes/user.routes");
-const productRoutes = require("./src/routes/product.routes");
-const purchaseRoutes = require("./src/routes/purchase.routes");
-const stockRoutes = require("./src/routes/stock.routes");
+
+const adminAuthRoutes = require("./src/routes/admin/auth.routes");
+const adminUserRoutes = require("./src/routes/admin/user.routes");
+const adminProductRoutes = require("./src/routes/admin/product.routes");
+const adminPurchaseRoutes = require("./src/routes/admin/purchase.routes");
+const adminStockRoutes = require("./src/routes/admin/stock.routes");
+
+const customerAuthRoutes = require("./src/routes/customer/auth.routes");
+const customerUserRoutes = require("./src/routes/customer/user.routes");
+
 
 dotenv.config();
 
@@ -54,14 +59,24 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/purchase-orders", purchaseRoutes);
-app.use("/api/stock", stockRoutes);
+const adminRouter = express.Router();
+adminRouter.use("/auth", adminAuthRoutes);
+adminRouter.use("/users", adminUserRoutes);
+adminRouter.use("/products", adminProductRoutes);
+adminRouter.use("/purchase-orders", adminPurchaseRoutes);
+adminRouter.use("/stock", adminStockRoutes);
+
+app.use("/api/admin", adminRouter);
+
+
+const customerRouter = express.Router();
+customerRouter.use("/auth", customerAuthRoutes);
+customerRouter.use("/users", customerUserRoutes);
+
+app.use("/api/customer", customerRouter);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("");
 });
 
 app.listen(PORT, HOST, () => {

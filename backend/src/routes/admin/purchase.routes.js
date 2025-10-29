@@ -4,8 +4,8 @@ const {
   getAllPurchaseOrders,
   getPurchaseOrderDetails,
   createPurchaseOrder,
-} = require("../controllers/purchase.controllers");
-const { protect } = require("../middleware/auth.middleware");
+} = require("../../controllers/admin/purchase.controllers");
+const { protect } = require("../../middleware/adminAuth.middleware");
 
 router.use(protect);
 

@@ -3,11 +3,11 @@ const logger = require("../config/logger");
 
 const protect = (req, res, next) => {
   try {
-    const token = req.cookies.authToken;
-    logger.info(`[AUTH_MIDDLEWARE] Checking for auth token in cookies.`);
+    const token = req.cookies.adminAuthToken;
+    logger.info(`[AUTH_MIDDLEWARE] Checking for admin auth token in cookies.`);
     if (token) {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
         req.user = decoded;
         next();
         logger.info(

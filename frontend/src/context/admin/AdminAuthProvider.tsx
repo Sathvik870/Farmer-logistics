@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import type { ReactNode } from "react";
 import api from "../../api.ts";
 
-import { AdminAuthContext , type Admin} from "./AdminAuthContext.ts";
+import { AdminAuthContext, type Admin } from "./AdminAuthContext.ts";
 
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -28,12 +28,17 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (token: string) => {
-    Cookies.set("adminAuthToken", token);
+    const isProduction = import.meta.env.PROD;
+
+    Cookies.set("adminAuthToken", token, {
+      secure: isProduction,
+      sameSite: "Lax",
+    });
     try {
-        const response = await api.get<Admin>("/api/admin/users/profile");
-        setAdmin(response.data);
+      const response = await api.get<Admin>("/api/admin/users/profile");
+      setAdmin(response.data);
     } catch (error) {
-        console.error("Failed to fetch admin profile after login", error);
+      console.error("Failed to fetch admin profile after login", error);
     }
   };
 

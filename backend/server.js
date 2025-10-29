@@ -14,7 +14,6 @@ const adminStockRoutes = require("./src/routes/admin/stock.routes");
 const customerAuthRoutes = require("./src/routes/customer/auth.routes");
 const customerUserRoutes = require("./src/routes/customer/user.routes");
 
-
 dotenv.config();
 
 const app = express();
@@ -36,20 +35,17 @@ function findLocalIp() {
 
 const allowedOrigins = [
   "http://localhost:5173",
-  `http://${findLocalIp()}:5173`,
   "https://farmer-logistics.netlify.app",
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("This origin is not allowed by CORS"));
       }
-      return callback(null, true);
     },
     credentials: true,
   })
@@ -67,7 +63,6 @@ adminRouter.use("/purchase-orders", adminPurchaseRoutes);
 adminRouter.use("/stock", adminStockRoutes);
 
 app.use("/api/admin", adminRouter);
-
 
 const customerRouter = express.Router();
 customerRouter.use("/auth", customerAuthRoutes);

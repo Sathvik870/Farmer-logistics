@@ -14,7 +14,9 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
       const token = Cookies.get("customerAuthToken");
       if (token) {
         try {
-          const response = await api.get<Customer>("/api/customer/users/profile");
+          const response = await api.get<Customer>(
+            "/api/customer/users/profile"
+          );
           setCustomer(response.data);
         } catch (error) {
           console.error("Failed to fetch customer profile", error);
@@ -28,12 +30,18 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (token: string) => {
-    Cookies.set("customerAuthToken", token, { expires: 5 });
+    const isProduction = import.meta.env.PROD;
+
+    Cookies.set("customerAuthToken", token, {
+      expires: 5,
+      secure: isProduction,
+      sameSite: "Lax",
+    });
     try {
-        const response = await api.get<Customer>("/api/customer/users/profile");
-        setCustomer(response.data);
+      const response = await api.get<Customer>("/api/customer/users/profile");
+      setCustomer(response.data);
     } catch (error) {
-        console.error("Failed to fetch customer profile after login", error);
+      console.error("Failed to fetch customer profile after login", error);
     }
   };
 
@@ -44,7 +52,13 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <CustomerAuthContext.Provider
-      value={{ isAuthenticated: !!customer, customer, isLoading, login, logout }}
+      value={{
+        isAuthenticated: !!customer,
+        customer,
+        isLoading,
+        login,
+        logout,
+      }}
     >
       {children}
     </CustomerAuthContext.Provider>

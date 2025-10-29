@@ -64,7 +64,7 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
       const fetchProducts = async () => {
         setLoadingProducts(true);
         try {
-          const response = await api.get("/api/products");
+          const response = await api.get("/api/admin/products");
           setAvailableProducts(response.data);
         } catch (error) {
           showAlert("Failed to load product list for purchase order.", "error");
@@ -195,7 +195,7 @@ const AddPurchaseOrderModal: React.FC<ModalProps> = ({
           purchase_price: item.purchase_price,
         })),
       };
-      await api.post("/api/purchase-orders", payload);
+      await api.post("/api/admin/purchase-orders", payload);
       showAlert("Purchase Order submitted successfully!", "success");
       onSaveSuccess();
       onClose();

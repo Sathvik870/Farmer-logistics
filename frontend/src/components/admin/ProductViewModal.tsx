@@ -47,7 +47,7 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
         setProduct(null);
         try {
           const response = await api.get<ProductDetails>(
-            `/api/products/${productId}`
+            `/api/admin/products/${productId}`
           );
           setProduct(response.data);
         } catch (err) {

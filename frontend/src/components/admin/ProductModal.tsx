@@ -98,14 +98,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
       if (isEditing) {
         await api.put(
-          `/api/products/${productToEdit.product_id}`,
+          `/api/admin/products/${productToEdit.product_id}`,
           submissionFormData,
           {
             headers: { "Content-Type": "multipart/form-data" },
           }
         );
       } else {
-        await api.post("/api/products", submissionFormData, {
+        await api.post("/api/admin/products", submissionFormData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }

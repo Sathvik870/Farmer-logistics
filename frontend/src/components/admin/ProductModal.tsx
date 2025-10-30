@@ -12,7 +12,19 @@ interface ProductModalProps {
 }
 
 const categoryOptions = ["Fruits", "Vegetables", "Dairy", "Grains"];
-const unitOptions = ["Kilo gram", "grams", "packet", "dozen", "box"];
+const unitOptions = [
+  "grams",
+  "Kilo gram",
+  "piece",
+  "packet",
+  "litre",
+  "ml",
+  "dozen",
+  "box",
+  "bottle",
+  "can",
+  "roll",
+];
 
 const labelStyle = "block text-base text-black mb-1 text-left";
 const inputStyle =
@@ -22,32 +34,51 @@ const primaryButtonStyle =
 const secondaryButtonStyle =
   "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
 
+const sellingUnitOptions = [
+  "grams",
+  "Kilo gram",
+  "piece",
+  "packet",
+  "litre",
+  "ml",
+  "dozen",
+  "box",
+  "bottle",
+  "can",
+  "roll",
+];
+
 const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
   onClose,
   onSaveSuccess,
   productToEdit,
 }) => {
+    const [initialData, setInitialData] = useState<Partial<Product>>({});
   const [formData, setFormData] = useState<Partial<Product>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLargePreviewOpen, setIsLargePreviewOpen] = useState(false);
   const { showAlert } = useAlert();
   useEffect(() => {
+    let data;
     if (productToEdit) {
-      setFormData(productToEdit);
-      setPreviewUrl(productToEdit.imageUrl || null);
+      data = { ...productToEdit };
     } else {
-      setFormData({
+      data = {
         product_name: "",
-        product_category: categoryOptions[0],
+        product_category: "",
         product_description: "",
-        unit_type: unitOptions[0],
+        unit_type: "",
         cost_price: 0,
         selling_price: 0,
-      });
-      setPreviewUrl(null);
+        sell_per_unit_qty: 0,
+        selling_unit: "",
+      };
     }
+    setFormData(data);
+    setInitialData(data);
+    setPreviewUrl(productToEdit?.imageUrl || null);
     setSelectedFile(null);
   }, [productToEdit, isOpen]);
 
@@ -67,6 +98,17 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
+  const hasFormChanged = () => {
+    if (selectedFile) return true; 
+    for (const key in initialData) {
+      if (initialData[key as keyof Product] !== formData[key as keyof Product]) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+  const isSaveDisabled = !hasFormChanged();
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -83,8 +125,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = { ...formData };
+    delete payload.product_id;
+    delete payload.product_code;
+    delete payload.available_quantity;
+    delete payload.saleable_quantity;
+    delete payload.imageUrl;
     const submissionFormData = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
+    Object.entries(payload).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         submissionFormData.append(key, String(value));
       }
@@ -153,7 +201,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         <div className="flex-grow overflow-y-auto">
           <form onSubmit={handleSubmit} className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              <div className="md:row-span-4 flex flex-col items-center justify-start">
+              <div className="md:row-span-4">
                 <input
                   id="productImage"
                   name="productImage"
@@ -163,16 +211,16 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   className="hidden"
                 />
                 {previewUrl ? (
-                  <div className="w-full text-center h-full flex flex-col">
+                  <div className="w-full h-full text-center flex flex-col">
                     <img
                       src={previewUrl}
                       alt="Product Preview"
-                      className="w-full flex-grow object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
+                      className="w-full h-full object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
                       onClick={() => setIsLargePreviewOpen(true)}
                     />
                     <label
                       htmlFor="productImage"
-                      className="mt-2 inline-block text-sm font-semibold text-green-700 cursor-pointer hover:text-green-800 hover:underline transition-colors"
+                      className="mt-2 inline-block text-sm font-semibold text-green-700 cursor-pointer hover:underline"
                     >
                       Change Image
                     </label>
@@ -180,9 +228,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 ) : (
                   <label
                     htmlFor="productImage"
-                    className="w-full h-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors"
+                    className="w-full h-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer hover:border-green-500"
                   >
-                                        <svg
+                    <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-12 w-12 text-gray-400"
                       fill="none"
@@ -204,10 +252,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         d="M12 8v.01"
-                      />{" "}
+                      />
                     </svg>
                     <span className="mt-2 text-sm font-semibold text-gray-600">
-                      Upload Product Image
+                      Upload Image
                     </span>
                     <p className="mt-1 text-xs text-gray-500">
                       JPG, PNG, up to 500KB
@@ -217,36 +265,139 @@ const ProductModal: React.FC<ProductModalProps> = ({
               </div>
 
               <div>
-                <label htmlFor="product_name" className={labelStyle}>Product Name</label>
-                <input id="product_name" name="product_name" value={formData.product_name || ""} onChange={handleChange} required className={inputStyle} />
+                <label htmlFor="product_name" className={labelStyle}>
+                  Product Name
+                </label>
+                <input
+                  id="product_name"
+                  name="product_name"
+                  value={formData.product_name || ""}
+                  onChange={handleChange}
+                  required
+                  className={inputStyle}
+                />
               </div>
-              
+
               <div>
-                <label htmlFor="product_category" className={labelStyle}>Category</label>
-                <select id="product_category" name="product_category" value={formData.product_category || ""} onChange={handleChange} className={inputStyle}>
-                  {categoryOptions.map((option) => (<option key={option} value={option}>{option}</option>))}
-                </select>
-              </div>
-              
-              <div>
-                <label htmlFor="unit_type" className={labelStyle}>Unit</label>
-                <select id="unit_type" name="unit_type" value={formData.unit_type || ""} onChange={handleChange} className={inputStyle}>
-                  {unitOptions.map((option) => (<option key={option} value={option}>{option}</option>))}
+                <label htmlFor="product_category" className={labelStyle}>
+                  Category
+                </label>
+                <select
+                  id="product_category"
+                  name="product_category"
+                  value={formData.product_category || ""}
+                  onChange={handleChange}
+                  className={inputStyle}
+                >
+                  <option value="" disabled>Select a Category</option>
+                  {categoryOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label htmlFor="cost_price" className={labelStyle}>Cost Price</label>
-                <input id="cost_price" name="cost_price" type="number" step="0.01" value={formData.cost_price || 0} onChange={handleChange} required className={inputStyle} />
+                <label htmlFor="unit_type" className={labelStyle}>
+                  Cost Price Unit
+                </label>
+                <select
+                  id="unit_type"
+                  name="unit_type"
+                  value={formData.unit_type || ""}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  required
+                >
+                  <option value="" disabled>Select a Unit</option>
+                  {unitOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
-              
+
               <div>
-                <label htmlFor="selling_price" className={labelStyle}>Selling Price</label>
-                <input id="selling_price" name="selling_price" type="number" step="0.01" value={formData.selling_price || 0} onChange={handleChange} required className={inputStyle} />
+                <label htmlFor="cost_price" className={labelStyle}>
+                  Cost Price
+                </label>
+                <input
+                  id="cost_price"
+                  name="cost_price"
+                  type="number"
+                  step="0.01"
+                  value={formData.cost_price || 0}
+                  onChange={handleChange}
+                  required
+                  className={inputStyle}
+                />
               </div>
+
               <div>
-                <label htmlFor="product_description" className={labelStyle}>Description (Optional)</label>
-                <input id="product_description" name="product_description" value={formData.product_description || ""} onChange={handleChange} className={`${inputStyle} w-full`} />
+                <label htmlFor="selling_price" className={labelStyle}>
+                  Selling Price
+                </label>
+                <input
+                  id="selling_price"
+                  name="selling_price"
+                  type="number"
+                  step="0.01"
+                  value={formData.selling_price || 0}
+                  onChange={handleChange}
+                  required
+                  className={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="sell_per_unit_qty" className={labelStyle}>
+                  Selling Quantity Per Selling Unit
+                </label>
+                <input
+                  id="sell_per_unit_qty"
+                  name="sell_per_unit_qty"
+                  type="number"
+                  value={formData.sell_per_unit_qty}
+                  onChange={handleChange}
+                  required
+                  className={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="selling_unit" className={labelStyle}>
+                  Selling Unit
+                </label>
+                <select
+                  id="selling_unit"
+                  name="selling_unit"
+                  value={formData.selling_unit || ""}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  required
+                >
+                  <option value="" disabled>Select a Unit</option>
+                  {sellingUnitOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="product_description" className={labelStyle}>
+                  Description (Optional)
+                </label>
+                <input
+                  id="product_description"
+                  name="product_description"
+                  value={formData.product_description || ""}
+                  onChange={handleChange}
+                  className={`${inputStyle}`}
+                />
               </div>
             </div>
           </form>
@@ -264,7 +415,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
             <button
               onClick={handleSubmit}
               type="submit"
-              className={`${primaryButtonStyle} flex-1 sm:flex-none`}
+              disabled={isSaveDisabled}
+              className={`${primaryButtonStyle} flex-1 sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
             >
               {productToEdit ? "Save Changes" : "Add Product"}
             </button>

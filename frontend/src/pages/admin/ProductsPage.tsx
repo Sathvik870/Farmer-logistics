@@ -30,6 +30,8 @@ export interface Product {
   selling_price: number;
   available_quantity: number;
   saleable_quantity: number;
+  sell_per_unit_qty?: number;
+  selling_unit?: string;
 }
 
 export interface ProductWithImage extends Product {
@@ -270,9 +272,13 @@ const ProductsPage: React.FC = () => {
       {
         field: "selling_price",
         headerName: "Selling Price",
-        valueFormatter: (p) =>
-          `₹${Number(p.value).toFixed(2)} / ${p.data.unit_type}`,
-        flex: 1.5,
+        valueFormatter: (params) => {
+          const price = Number(params.value || 0).toFixed(2);
+          const qty = params.data?.sell_per_unit_qty ?? "";
+          const unit = params.data?.selling_unit ?? "";
+          return `₹${price} / ${qty} ${unit}`;
+        },
+        flex: 2,
       },
       {
         field: "actions",

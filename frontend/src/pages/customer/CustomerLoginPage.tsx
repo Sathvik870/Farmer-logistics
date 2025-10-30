@@ -5,7 +5,7 @@ import logo from "../../assets/cropped_circle_image.png";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff } from "react-icons/hi";
 import { FcGoogle } from "react-icons/fc";
 import loginbg from "../../assets/login-bg.jpg";
-import { useCustomerAuth } from "../../context/customer/useCustomerAuth.ts";
+import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth.ts";
 
 const LoginPage: React.FC = () => {
   const { login } = useCustomerAuth();

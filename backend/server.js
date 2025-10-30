@@ -14,6 +14,8 @@ const adminStockRoutes = require("./src/routes/admin/stock.routes");
 const customerAuthRoutes = require("./src/routes/customer/auth.routes");
 const customerUserRoutes = require("./src/routes/customer/user.routes");
 
+const publicProductRoutes = require("./src/routes/public/product.routes");
+
 dotenv.config();
 
 const app = express();
@@ -69,6 +71,13 @@ customerRouter.use("/auth", customerAuthRoutes);
 customerRouter.use("/users", customerUserRoutes);
 
 app.use("/api/customer", customerRouter);
+
+
+const publicRouter = express.Router();
+publicRouter.use("/products", publicProductRoutes);
+
+app.use("/api/public", publicRouter);
+
 
 app.get("/", (req, res) => {
   res.send("Hello there! Welcome to the Farmer Logistics Backend Server.");

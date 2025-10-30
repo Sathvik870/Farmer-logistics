@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { useCustomerAuth } from "../../context/customer/useCustomerAuth.ts";
+import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth.ts";
 
 const PublicOnlyRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useCustomerAuth();

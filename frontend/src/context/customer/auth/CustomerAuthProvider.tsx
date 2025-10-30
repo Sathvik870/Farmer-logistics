@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import api from "../../api";
+import api from "../../../api.ts";
 
 import { CustomerAuthContext, type Customer } from "./CustomerAuthContext.ts";
 

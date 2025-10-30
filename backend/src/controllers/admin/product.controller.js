@@ -15,6 +15,8 @@ exports.getAllProducts = async (req, res) => {
         p.unit_type,
         p.cost_price,
         p.selling_price,
+        p.sell_per_unit_qty, 
+        p.selling_unit,
         COALESCE(s.available_quantity, 0) as available_quantity,
         COALESCE(s.saleable_quantity, 0) as saleable_quantity
       FROM 
@@ -49,7 +51,9 @@ exports.createProduct = async (req, res) => {
     product_description,
     unit_type,
     cost_price,
-    selling_price
+    selling_price,
+    sell_per_unit_qty,
+    selling_unit
   } = req.body;
   const imageBuffer = req.file?.buffer;
   if (req.file) {
@@ -77,8 +81,8 @@ exports.createProduct = async (req, res) => {
 
   try {
     const newProductQuery = `
-      INSERT INTO products (product_name, product_category, product_description, unit_type, cost_price, product_image, selling_price)
-      VALUES ($1, $2, $3, $4, $5, $6 ,$7)
+      INSERT INTO products (product_name, product_category, product_description, unit_type, cost_price, product_image, selling_price, sell_per_unit_qty, selling_unit)
+      VALUES ($1, $2, $3, $4, $5, $6 ,$7, $8, $9)
       RETURNING *;
     `;
 
@@ -89,7 +93,9 @@ exports.createProduct = async (req, res) => {
       unit_type,
       cost_price,
       imageBuffer,
-      selling_price
+      selling_price,
+      sell_per_unit_qty,
+      selling_unit
     ]);
 
     const { product_image, ...productData } = rows[0];
@@ -120,7 +126,9 @@ exports.updateProduct = async (req, res) => {
       product_description,
       unit_type,
       cost_price,
-      selling_price
+      selling_price,
+      sell_per_unit_qty,
+      selling_unit
     } = req.body;
     const imageBuffer = req.file ? req.file.buffer : null;
     const imageMimeType = req.file ? req.file.mimetype : null;
@@ -142,13 +150,6 @@ exports.updateProduct = async (req, res) => {
     }
     if (typeof product_category !== "string" || product_category.length > 50) {
       return res.status(400).json({ message: "Invalid category." });
-    }
-
-    if (
-      typeof product_description !== "string" ||
-      product_description.length > 500
-    ) {
-      return res.status(400).json({ message: "Description too long." });
     }
 
     if (typeof unit_type !== "string" || unit_type.length > 20) {
@@ -189,8 +190,8 @@ exports.updateProduct = async (req, res) => {
     if (imageBuffer) {
       updateQuery = `
         UPDATE products
-        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, selling_price = $6, product_image = $7, updated_at = CURRENT_TIMESTAMP
-        WHERE product_id = $8
+        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, selling_price = $6, product_image = $7, updated_at = CURRENT_TIMESTAMP ,sell_per_unit_qty = $8, selling_unit = $9
+        WHERE product_id = $10
         RETURNING *;
       `;
       queryParams = [
@@ -201,13 +202,15 @@ exports.updateProduct = async (req, res) => {
         cost_price,
         selling_price,
         imageBuffer,
+        sell_per_unit_qty, 
+        selling_unit,
         productId,
       ];
     } else {
       updateQuery = `
         UPDATE products
-        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, selling_price = $6, updated_at = CURRENT_TIMESTAMP
-        WHERE product_id = $7
+        SET product_name = $1, product_category = $2, product_description = $3, unit_type = $4, cost_price = $5, selling_price = $6, updated_at = CURRENT_TIMESTAMP , sell_per_unit_qty = $7, selling_unit = $8
+        WHERE product_id = $9
         RETURNING *;
       `;
       queryParams = [
@@ -217,6 +220,8 @@ exports.updateProduct = async (req, res) => {
         unit_type,
         cost_price,
         selling_price,
+        sell_per_unit_qty,
+        selling_unit,
         productId,
       ];
     }
@@ -286,7 +291,7 @@ exports.getProductById = async (req, res) => {
     const query = `
       SELECT 
         p.product_id, p.product_code, p.product_name, p.product_category, p.product_description, 
-        p.unit_type, p.cost_price, p.selling_price, p.product_image,
+        p.unit_type, p.cost_price, p.selling_price, p.product_image, p.sell_per_unit_qty, p.selling_unit,
         COALESCE(s.available_quantity, 0) as available_quantity
       FROM 
         products p

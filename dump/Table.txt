@@ -64,6 +64,8 @@ CREATE TABLE  products (
     unit_type character varying(20) NOT NULL,
     cost_price numeric(10,2) NOT NULL,
     selling_price numeric(10,2),
+    sell_per_unit_qty NUMERIC(10,2),
+    selling_unit VARCHAR(20);
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     added_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,

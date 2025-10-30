@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import logo from "../../assets/cropped_circle_image.png";
-import { useCustomerAuth } from "../../context/customer/useCustomerAuth.ts";
+import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth.ts";
 
 declare global {
   interface Window {

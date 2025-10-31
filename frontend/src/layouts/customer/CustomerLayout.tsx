@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "../../components/customer/Navbar";
+import FloatingCartButton from "../../components/customer/FloatingCartButton";
 
 const CustomerLayout: React.FC = () => {
   return (
@@ -9,6 +10,7 @@ const CustomerLayout: React.FC = () => {
       <main className="container mx-auto p-4 md:p-8">
         <Outlet />
       </main>
+      <FloatingCartButton />
     </div>
   );
 };

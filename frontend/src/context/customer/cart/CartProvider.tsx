@@ -22,6 +22,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateItemQuantityLive = (productId: number, quantityStr: string) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.product_id === productId
+          ? { ...item, quantity: parseFloat(quantityStr) || 0 }
+          : item
+      )
+    );
+  };
+
   const updateItemQuantity = (productId: number, quantity: number) => {
     setCartItems((prevItems) => {
       if (quantity <= 0) {
@@ -38,7 +48,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return item ? item.quantity : 0;
   };
 
-  const cartCount = cartItems.length;
+  const cartCount = cartItems.filter(item => item.quantity > 0).length;
+
+  const totalPrice = cartItems.reduce(
+    (total, item) => total + (item.selling_price * (item.quantity || 0)),
+    0
+  );
 
   return (
     <CartContext.Provider
@@ -48,6 +63,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         updateItemQuantity,
         getItemQuantity,
         cartCount,
+        updateItemQuantityLive,
+        totalPrice 
       }}
     >
       {children}

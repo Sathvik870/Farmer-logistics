@@ -12,6 +12,8 @@ export interface Customer {
   address: string | null;
   city: string | null;
   state: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface CustomerAuthContextType {

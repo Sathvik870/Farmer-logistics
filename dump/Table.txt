@@ -28,6 +28,8 @@ CREATE TABLE  customers (
     last_name character varying(100) NOT NULL,
     email character varying(150) NOT NULL UNIQUE,
     phone_number character varying(20),
+    longitude DECIMAL(18, 15),
+    latitude DECIMAL(18, 15),
     address character varying(255),
     city character varying(100),
     state character varying(100),

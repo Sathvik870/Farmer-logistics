@@ -11,6 +11,8 @@ export interface CartContextType {
   updateItemQuantity: (productId: number, quantity: number) => void;
   getItemQuantity: (productId: number) => number;
   cartCount: number;
+  updateItemQuantityLive: (productId: number, quantityStr: string) => void;
+  totalPrice: number;
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined);

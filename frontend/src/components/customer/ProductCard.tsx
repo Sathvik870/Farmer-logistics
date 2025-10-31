@@ -7,45 +7,40 @@ interface ProductCardProps {
   product: ProductWithImage;
 }
 
-const QuantityStepper: React.FC<{ productId: number }> = ({ productId }) => {
-  const { getItemQuantity, updateItemQuantity } = useCart();
+interface QuantityStepperProps {
+  productId: number;
+  onEditingChange: (isEditing: boolean) => void;
+}
+
+const QuantityStepper: React.FC<QuantityStepperProps> = ({
+  productId,
+  onEditingChange,
+}) => {
+  const { getItemQuantity, updateItemQuantity, updateItemQuantityLive } =
+    useCart();
   const quantity = getItemQuantity(productId);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(quantity.toString());
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setInputValue(quantity.toString());
-  }, [quantity]);
-
-  useEffect(() => {
+    onEditingChange(isEditing);
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
-  }, [isEditing]);
+  }, [isEditing, onEditingChange]);
 
-  const handleUpdate = () => {
+  const handleFinalUpdate = () => {
     setIsEditing(false);
-    let newQuantity = parseInt(inputValue, 10);
-    if (!isNaN(newQuantity)) {
-      if (newQuantity < 0) newQuantity = 0;
-      updateItemQuantity(productId, newQuantity);
-    } else {
-      setInputValue(quantity.toString());
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value === "" || parseInt(e.target.value, 10) >= 0) {
-      setInputValue(e.target.value);
-    }
+    let finalQuantity = Math.floor(quantity);
+    if (finalQuantity < 0) finalQuantity = 0;
+    updateItemQuantity(productId, finalQuantity);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleUpdate();
+      handleFinalUpdate();
     }
   };
 
@@ -63,9 +58,9 @@ const QuantityStepper: React.FC<{ productId: number }> = ({ productId }) => {
             ref={inputRef}
             type="number"
             min="0"
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleUpdate}
+            value={quantity === 0 && isEditing ? "" : String(quantity)}
+            onChange={(e) => updateItemQuantityLive(productId, e.target.value)}
+            onBlur={handleFinalUpdate}
             onKeyDown={handleKeyDown}
             className="w-full text-center bg-transparent outline-none appearance-none [-moz-appearance:textfield]"
           />
@@ -74,7 +69,7 @@ const QuantityStepper: React.FC<{ productId: number }> = ({ productId }) => {
             onClick={() => setIsEditing(true)}
             className="cursor-pointer w-full h-full flex items-center justify-center"
           >
-            {quantity}
+            {Math.floor(quantity)}
           </span>
         )}
       </div>
@@ -93,6 +88,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, getItemQuantity } = useCart();
   const quantity = getItemQuantity(product.product_id);
 
+  const [isStepperEditing, setIsStepperEditing] = useState(false);
+  const showAddButton = quantity === 0 && !isStepperEditing;
   return (
     <div className="group bg-white border border-gray-200 rounded-lg shadow-sm p-3 flex flex-col justify-between hover:shadow-lg transition-shadow h-75">
       <div>
@@ -115,7 +112,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <span className="font-bold text-gray-900">
           ₹{product.selling_price}
         </span>
-        {quantity === 0 ? (
+        {showAddButton ? (
           <button
             onClick={() => addToCart(product)}
             className="border-2 border-[#387c40] text-green-700 font-bold px-6 py-1.5 rounded-lg hover:bg-[#387c40] hover:text-white transition-all duration-300"
@@ -123,7 +120,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             ADD
           </button>
         ) : (
-          <QuantityStepper productId={product.product_id} />
+          <QuantityStepper
+            productId={product.product_id}
+            onEditingChange={setIsStepperEditing}
+          />
         )}
       </div>
     </div>

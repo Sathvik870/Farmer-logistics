@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import { AdminAuthProvider } from "./context/admin/AdminAuthProvider";
 import { CustomerAuthProvider } from "./context/customer/auth/CustomerAuthProvider";
 import { CartProvider } from "./context/customer/cart/CartProvider";
+import { LocationProvider } from "./context/customer/location/LocationProvider";
 import { AlertProvider } from "./context/common/AlertContext";
 
 import AdminLogin from "./pages/admin/AdminLoginPage";
@@ -25,6 +27,7 @@ function App() {
     <CustomerAuthProvider>
       <AdminAuthProvider>
         <AlertProvider>
+          <LocationProvider>
           <CartProvider>
             <Router>
               <Routes>
@@ -58,6 +61,7 @@ function App() {
               </Routes>
             </Router>
           </CartProvider>
+          </LocationProvider>
         </AlertProvider>
       </AdminAuthProvider>
     </CustomerAuthProvider>

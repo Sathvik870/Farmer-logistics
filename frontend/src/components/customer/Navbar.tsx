@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth";
 import { useLocation } from "../../context/customer/location/useLocation";
 import LocationPicker from "./LocationPicker.tsx";
@@ -14,23 +14,30 @@ import { GiFruitBowl, GiMilkCarton } from "react-icons/gi";
 import { LuCarrot } from "react-icons/lu";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { useCart } from "../../context/customer/cart/useCart.ts";
+import { useCategory } from "../../context/customer/category/useCategory.ts";
+import { useSearch } from "../../context/customer/search/useSearch.ts";
+import GuestLoginModal from "./GuestLoginModal";
 
 const categories = [
-  { name: "All", href: "/", icon: <IoBagHandleOutline size={20} /> },
-  { name: "Fruits", href: "/category/fruits", icon: <GiFruitBowl size={20} /> },
-  {
-    name: "Vegetables",
-    href: "/category/vegetables",
-    icon: <LuCarrot size={20} />,
-  },
-  { name: "Dairy", href: "/category/dairy", icon: <GiMilkCarton size={20} /> },
+  { name: "All", icon: <IoBagHandleOutline size={20} /> },
+  { name: "Fruits", icon: <GiFruitBowl size={20} /> },
+  { name: "Vegetables", icon: <LuCarrot size={20} /> },
+  { name: "Dairy", icon: <GiMilkCarton size={20} /> },
 ];
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  onCartClick: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const { isAuthenticated, customer } = useCustomerAuth();
   const { cartCount } = useCart();
   const { location, setLocation } = useLocation();
+  const { selectedCategory, setSelectedCategory } = useCategory();
+  const { searchTerm, setSearchTerm } = useSearch();
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+
   useEffect(() => {
     if (
       isAuthenticated &&
@@ -54,6 +61,15 @@ const Navbar: React.FC = () => {
     return address.substring(0, length) + "...";
   };
 
+  const handleLocationClick = () => {
+    if (isAuthenticated) {
+      setIsLocationPickerOpen(true);
+    } else {
+      setIsGuestModalOpen(true);
+    }
+  };
+
+
   return (
     <>
       <header className="sticky top-0 z-40 bg-white shadow-sm">
@@ -66,7 +82,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <div className="relative md:border-l md:ml-4 md:pl-4">
                   <button
-                    onClick={() => setIsLocationPickerOpen((prev) => !prev)}
+                    onClick={handleLocationClick}
                     className="flex items-center gap-1 text-sm text-gray-500 font-semibold"
                   >
                     <HiOutlineLocationMarker />
@@ -90,7 +106,9 @@ const Navbar: React.FC = () => {
                 <HiOutlineSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
-                  placeholder='Search for "cheese slices"'
+                  placeholder='Search your favorite products, e.g., Onions'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full h-12 pl-12 pr-4 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-[#387c40]"
                 />
               </div>
@@ -102,11 +120,15 @@ const Navbar: React.FC = () => {
               >
                 <HiOutlineUserCircle size={24} />
                 <span>
-                  {isAuthenticated && customer ? customer.first_name : "Login"}
+                  {isAuthenticated && customer ? (
+                    customer.is_guest_user ? customer.customer_code : customer.first_name
+                  ) : (
+                    "Login"
+                  )}
                 </span>
               </Link>
-              <Link
-                to="/cart"
+              <button
+                onClick={onCartClick}
                 className="relative flex flex-col items-center text-xs md:text-sm font-medium text-gray-700 hover:text-[#387c40]"
               >
                 <HiOutlineShoppingCart size={24} />
@@ -116,7 +138,7 @@ const Navbar: React.FC = () => {
                     {cartCount}
                   </span>
                 )}
-              </Link>
+              </button>
             </div>
           </div>
           <div className="mt-3 md:hidden">
@@ -124,7 +146,9 @@ const Navbar: React.FC = () => {
               <HiOutlineSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder='Search for "cheese slices"'
+                placeholder='Onions, Apples...'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-10 pl-10 pr-4 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-1 focus:ring-[#387c40]"
               />
             </div>
@@ -133,24 +157,26 @@ const Navbar: React.FC = () => {
         <div className="border-t border-gray-200">
           <nav className="container mx-auto px-4 flex items-center gap-6 overflow-x-auto py-2">
             {categories.map((category) => (
-              <NavLink
+              <button
                 key={category.name}
-                to={category.href}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
-                    isActive
-                      ? "bg-purple-100 text-[#387c40]"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`
-                }
+                onClick={() => setSelectedCategory(category.name)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
+                  selectedCategory === category.name
+                    ? "bg-green-100 text-[#387c40]"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
               >
                 {category.icon}
                 {category.name}
-              </NavLink>
+              </button>
             ))}
           </nav>
         </div>
       </header>
+      <GuestLoginModal 
+        isOpen={isGuestModalOpen} 
+        onClose={() => setIsGuestModalOpen(false)} 
+      />
     </>
   );
 };

@@ -123,7 +123,7 @@ exports.login = async (req, res) => {
     const query = `
       SELECT customer_id, customer_code, first_name, last_name, email, phone_number, password, username, gender
       FROM customers
-      WHERE email = $1 OR phone_number = $1 OR customer_code = $1 OR username = $1;
+      WHERE email = $1 OR phone_number = $1 OR customer_code = $1 OR username = $1 AND is_google_auth = FALSE;
     `;
     const { rows } = await db.query(query, [identifier]);
 
@@ -374,5 +374,81 @@ exports.googleAuthLoginOnly = async (req, res) => {
   } catch (error) {
     console.error("Google Login Error:", error);
     return res.status(500).json({ message: "Google login failed" });
+  }
+};
+
+exports.guestLogin = async (req, res) => {
+  const { phone_number } = req.body;
+  logger.info(`[GUEST_AUTH] Guest login attempt for phone: ${phone_number}`);
+
+  if (!phone_number) {
+    return res.status(400).json({ message: "Phone number is required." });
+  }
+
+  try {
+    const { rows } = await db.query(
+      "SELECT customer_id, customer_code, first_name, is_guest_user, is_google_auth FROM customers WHERE phone_number = $1",
+      [phone_number]
+    );
+
+    let customer;
+
+    if (rows.length > 0) {
+      const existingUser = rows[0];
+
+      if (existingUser.is_guest_user) {
+        logger.info(`[GUEST_AUTH] Existing guest user found for phone: ${phone_number}`);
+        customer = existingUser;
+      } else {
+        logger.warn(`[GUEST_AUTH] Phone number ${phone_number} belongs to a registered user. Guest login denied.`);
+        return res.status(409).json({
+          message: "This phone number is already registered. Please log in using your password or Google account.",
+          isRegisteredUser: true,
+        });
+      }
+    } else {
+      logger.info(`[GUEST_AUTH] No user found. Creating new guest account for phone: ${phone_number}`);
+      
+      const newGuestQuery = `
+        INSERT INTO customers (phone_number, first_name, last_name, email, is_guest_user)
+        VALUES ($1, $2, $3, $4, TRUE)
+        RETURNING customer_id, customer_code, first_name, is_guest_user;
+      `;
+
+      const dummyEmail = `guest_${Date.now()}@farmerlogistics.com`;
+      
+      const newGuestResult = await db.query(newGuestQuery, [
+        phone_number,
+        'Guest',       
+        'User',
+        dummyEmail,
+      ]);
+      
+      customer = newGuestResult.rows[0];
+    }
+
+    const tokenPayload = {
+      customer_id: customer.customer_id,
+      customer_code: customer.customer_code,
+      role: "customer",
+      is_guest: true,
+    };
+
+    const token = jwt.sign(tokenPayload, process.env.CUSTOMER_JWT_SECRET, {
+      expiresIn: "5d",
+    });
+
+    res.status(200).json({
+      message: "Guest login successful!",
+      token: token,
+      customer: customer,
+    });
+
+  } catch (error) {
+    logger.error(`[GUEST_AUTH] Error during guest login for ${phone_number}: ${error.message}`);
+    if (error.code === '23505') {
+        return res.status(500).json({ message: "An unexpected error occurred. Please try again." });
+    }
+    res.status(500).json({ message: "Internal server error." });
   }
 };

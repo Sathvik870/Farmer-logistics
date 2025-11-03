@@ -1,0 +1,107 @@
+import React from "react";
+import { useCart } from "../../context/customer/cart/useCart";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiOutlineReceiptTax, HiChevronLeft, HiOutlineShoppingCart  } from "react-icons/hi";
+import CartItemCard from "./CartItemCard";
+
+interface CartDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const BillSummary: React.FC = () => {
+  const { cartItems } = useCart();
+  const itemTotal = cartItems.reduce(
+    (total, item) => total + item.selling_price * item.quantity,
+    0
+  );
+  const deliveryFee = 50.0;
+  const toPay = itemTotal + deliveryFee;
+
+  return (
+    <div className="p-4 bg-white rounded-lg  border border-gray-200">
+      <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+        <HiOutlineReceiptTax /> Bill Summary
+      </h3>
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <p className="text-gray-600">Item Total</p>
+          <p className="font-semibold">₹{itemTotal.toFixed(2)}</p>
+        </div>
+        <div className="flex justify-between">
+          <p className="text-gray-600">Delivery Fee</p>
+          <p className="font-semibold">₹{deliveryFee.toFixed(2)}</p>
+        </div>
+        <hr className="my-2 border-gray-200" />
+        <div className="flex justify-between text-base font-bold">
+          <p>To Pay</p>
+          <p>₹{toPay.toFixed(2)}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
+  const { cartItems, cartCount } = useCart();
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            className="fixed inset-0 bg-[#ffffff00] hidden md:block"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+
+          <motion.div
+            className="fixed top-0 right-0 h-full w-full md:w-[400px] bg-gray-50 z-50 flex flex-col"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
+          >
+            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+              <button
+                onClick={onClose}
+                className="text-gray-600 hover:text-black"
+              >
+                <HiChevronLeft size={24} />
+              </button>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <HiOutlineShoppingCart className="text-black" />
+                Cart ({cartCount})
+              </h2>
+            </header>
+            <div className="flex-grow p-4 overflow-y-auto">
+              {cartItems.length > 0 ? (
+                <div className="bg-white rounded-lg divide-y divide-gray-200 px-4">
+                  {cartItems.map((item) => (
+                    <CartItemCard key={item.product_id} item={item} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center pt-20 text-gray-500">
+                  Your cart is empty.
+                </div>
+              )}
+            </div>
+            {cartItems.length > 0 && (
+              <footer className="flex-shrink-0 p-4 space-y-4 border-t border-gray-200 bg-white">
+                <BillSummary />
+                <button className="w-full bg-[#387c40] text-white font-bold py-3 rounded-lg hover:bg-[#144a31] transition-colors">
+                  Add Address to Proceed
+                </button>
+              </footer>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default CartDrawer;

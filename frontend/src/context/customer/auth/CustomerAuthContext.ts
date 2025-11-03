@@ -5,15 +5,16 @@ export interface Customer {
   customer_code: string;
   username: string | null;
   gender: string | null;
-  first_name: string;
-  last_name: string;
-  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
   phone_number: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
   latitude: number | null;
   longitude: number | null;
+  is_guest_user: boolean;
 }
 
 export interface CustomerAuthContextType {

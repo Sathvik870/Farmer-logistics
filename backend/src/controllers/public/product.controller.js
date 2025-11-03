@@ -2,10 +2,13 @@ const db = require("../../config/db");
 const logger = require("../../config/logger");
 
 exports.getSaleableProducts = async (req, res) => {
-  logger.info("[PUBLIC_PRODUCT] Attempting to fetch all saleable products.");
+
+  const { category, search } = req.query;
+
+  logger.info(`[PUBLIC_PRODUCT] Fetching products. Category: ${category || 'All'}, Search: '${search || ''}'`);
 
   try {
-    const query = `
+    let query = `
       SELECT 
         p.product_id, p.product_code, p.product_name, p.product_category,
         p.product_description, p.unit_type, p.cost_price, p.selling_price,
@@ -17,10 +20,25 @@ exports.getSaleableProducts = async (req, res) => {
         stocks s ON p.product_id = s.product_id
       WHERE 
         s.saleable_quantity > 0
-      ORDER BY 
-        p.product_name ASC;
     `;
-    const { rows } = await db.query(query);
+
+    const queryParams = [];
+    
+    let paramIndex = 1;
+
+    if (category && category.toLowerCase() !== 'all') {
+      query += ` AND p.product_category = $${paramIndex++}`;
+      queryParams.push(category);
+    }
+
+    if (search) {
+      query += ` AND p.product_name ILIKE $${paramIndex++}`;
+      queryParams.push(`%${search}%`);
+    }
+
+    query += ` ORDER BY p.product_name ASC;`;
+    
+    const { rows } = await db.query(query, queryParams);
 
     const productsWithImages = rows.map(product => {
       let imageUrl = null;

@@ -7,12 +7,13 @@ export interface CartItem extends ProductWithImage {
 
 export interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: ProductWithImage) => void;
-  updateItemQuantity: (productId: number, quantity: number) => void;
-  getItemQuantity: (productId: number) => number;
-  cartCount: number;
-  updateItemQuantityLive: (productId: number, quantityStr: string) => void;
+  cartCount: number;  
   totalPrice: number;
+  addToCart: (product: ProductWithImage) => void;
+  getItemQuantity: (productId: number) => number;
+  incrementItem: (productId: number) => void;
+  decrementItem: (productId: number) => void;
+  setItemQuantity: (productId: number, quantity: number) => void;
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined);

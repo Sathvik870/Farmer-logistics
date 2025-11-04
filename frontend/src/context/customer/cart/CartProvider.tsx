@@ -7,6 +7,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const addToCart = (product: ProductWithImage) => {
+    if (product.saleable_quantity < 1) return;
     setCartItems((prevItems) => {
       const existingItem = prevItems.find(
         (item) => item.product_id === product.product_id
@@ -22,23 +23,48 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateItemQuantityLive = (productId: number, quantityStr: string) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.product_id === productId
-          ? { ...item, quantity: parseFloat(quantityStr) || 0 }
-          : item
-      )
+  const incrementItem = (productId: number) => {
+    setCartItems((prevItems) => 
+      prevItems.map((item) => {
+        if (item.product_id === productId) {
+          if (item.quantity < item.saleable_quantity) {
+            return { ...item, quantity: item.quantity + 1 };
+          }
+        }
+        return item;
+      })
     );
   };
 
-  const updateItemQuantity = (productId: number, quantity: number) => {
+  const decrementItem = (productId: number) => {
     setCartItems((prevItems) => {
-      if (quantity <= 0) {
+      const existingItem = prevItems.find(item => item.product_id === productId);
+      if (existingItem && existingItem.quantity === 1) {
         return prevItems.filter((item) => item.product_id !== productId);
       }
       return prevItems.map((item) =>
-        item.product_id === productId ? { ...item, quantity } : item
+        item.product_id === productId ? { ...item, quantity: item.quantity - 1 } : item
+      );
+    });
+  };
+
+  const setItemQuantity = (productId: number, quantity: number) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find(item => item.product_id === productId);
+      if (!existingItem) return prevItems;
+
+      let newQuantity = quantity;
+      if (newQuantity < 0) newQuantity = 0;
+      if (newQuantity > existingItem.saleable_quantity) {
+        newQuantity = existingItem.saleable_quantity;
+      }
+      
+      if (newQuantity === 0) {
+        return prevItems.filter(item => item.product_id !== productId);
+      }
+
+      return prevItems.map((item) =>
+        item.product_id === productId ? { ...item, quantity: newQuantity } : item
       );
     });
   };
@@ -48,10 +74,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return item ? item.quantity : 0;
   };
 
-  const cartCount = cartItems.filter(item => item.quantity > 0).length;
+  const cartCount = cartItems.filter((item) => item.quantity > 0).length;
 
   const totalPrice = cartItems.reduce(
-    (total, item) => total + (item.selling_price * (item.quantity || 0)),
+    (total, item) => total + item.selling_price * (item.quantity || 0),
     0
   );
 
@@ -60,11 +86,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       value={{
         cartItems,
         addToCart,
-        updateItemQuantity,
+        incrementItem,
+        decrementItem,
+        setItemQuantity,
         getItemQuantity,
         cartCount,
-        updateItemQuantityLive,
-        totalPrice 
+        totalPrice,
+
       }}
     >
       {children}

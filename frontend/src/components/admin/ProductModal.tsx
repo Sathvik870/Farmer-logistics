@@ -13,39 +13,36 @@ interface ProductModalProps {
 
 const categoryOptions = ["Fruits", "Vegetables", "Dairy", "Grains"];
 const unitOptions = [
-  "grams",
-  "Kilo gram",
+  "gm",
+  "kg",
   "piece",
   "packet",
-  "litre",
+  "ltr",
   "ml",
   "dozen",
   "box",
   "bottle",
   "can",
-  "roll",
+  "bunch",
 ];
 
 const labelStyle = "block text-base text-black mb-1 text-left";
-const inputStyle =
-  "w-full text-base bg-transparent border-b-2 placeholder-gray-500 border-gray-300 py-2 px-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-300 ease-in-out";
-const primaryButtonStyle =
-  "flex gap-3 text-base cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center";
-const secondaryButtonStyle =
-  "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
+const inputStyle = "w-full text-base bg-transparent border-b-2 placeholder-gray-500 border-gray-300 py-2 px-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-300 ease-in-out";
+const primaryButtonStyle = "flex gap-3 text-base cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center";
+const secondaryButtonStyle = "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
 
 const sellingUnitOptions = [
-  "grams",
-  "Kilo gram",
+  "gm",
+  "kg",
   "piece",
   "packet",
-  "litre",
+  "ltr",
   "ml",
   "dozen",
   "box",
   "bottle",
   "can",
-  "roll",
+  "bunch",
 ];
 
 const ProductModal: React.FC<ProductModalProps> = ({

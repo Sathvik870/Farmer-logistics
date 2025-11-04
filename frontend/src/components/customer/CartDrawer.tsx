@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useState, useRef } from "react";
+import { useLocation } from "../../context/customer/location/useLocation";
 import { useCart } from "../../context/customer/cart/useCart";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiOutlineReceiptTax, HiChevronLeft, HiOutlineShoppingCart  } from "react-icons/hi";
+import {
+  HiOutlineReceiptTax,
+  HiChevronLeft,
+  HiOutlineShoppingCart,
+} from "react-icons/hi";
 import CartItemCard from "./CartItemCard";
+import DeliveryLocation from "./DeliveryLocation";
+import LocationPicker from "./LocationPicker";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -44,63 +51,87 @@ const BillSummary: React.FC = () => {
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const { cartItems, cartCount } = useCart();
-
+  const { location } = useLocation();
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const isProceedDisabled = !location;
+  const locationButtonRef = useRef<HTMLDivElement>(null);
+  const handlePlaceOrder = () => {
+    // Implement place order logic here
+  };
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            className="fixed inset-0 bg-[#ffffff00] hidden md:block"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-[#ffffff00] hidden md:block"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+            />
 
-          <motion.div
-            className="fixed top-0 right-0 h-full w-full md:w-[400px] bg-gray-50 z-50 flex flex-col"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
-          >
-            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-              <button
-                onClick={onClose}
-                className="text-gray-600 hover:text-black"
-              >
-                <HiChevronLeft size={24} />
-              </button>
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <HiOutlineShoppingCart className="text-black" />
-                Cart ({cartCount})
-              </h2>
-            </header>
-            <div className="flex-grow p-4 overflow-y-auto">
-              {cartItems.length > 0 ? (
-                <div className="bg-white rounded-lg divide-y divide-gray-200 px-4">
-                  {cartItems.map((item) => (
-                    <CartItemCard key={item.product_id} item={item} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center pt-20 text-gray-500">
-                  Your cart is empty.
-                </div>
-              )}
-            </div>
-            {cartItems.length > 0 && (
-              <footer className="flex-shrink-0 p-4 space-y-4 border-t border-gray-200 bg-white">
-                <BillSummary />
-                <button className="w-full bg-[#387c40] text-white font-bold py-3 rounded-lg hover:bg-[#144a31] transition-colors">
-                  Add Address to Proceed
+            <motion.div
+              className="fixed top-0 right-0 h-full w-full md:w-[400px] bg-gray-50 z-50 flex flex-col"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
+            >
+              <header className="relative flex-shrink-0 flex items-center justify-center p-4 border-b bg-white border-gray-200">
+                <button
+                  onClick={onClose}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-black"
+                >
+                  <HiChevronLeft size={24} />
                 </button>
-              </footer>
-            )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <HiOutlineShoppingCart className="text-gray-700" />
+                  Cart ({cartCount})
+                </h2>
+              </header>
+              <div className="flex-grow p-4 overflow-y-auto space-y-4">
+                <div ref={locationButtonRef} className="relative">
+                  <DeliveryLocation
+                    onSelectLocationClick={() => setIsLocationPickerOpen(true)}
+                  />
+
+                  <LocationPicker
+                    isOpen={isLocationPickerOpen}
+                    onClose={() => setIsLocationPickerOpen(false)}
+                  />
+                </div>
+                {cartItems.length > 0 ? (
+                  <div className="bg-white rounded-lg divide-y divide-gray-200 px-4">
+                    {cartItems.map((item) => (
+                      <CartItemCard key={item.product_id} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center pt-20 text-gray-500">
+                    Your cart is empty.
+                  </div>
+                )}
+              </div>
+              {cartItems.length > 0 && (
+                <footer className="flex-shrink-0 p-4 space-y-4 border-t border-gray-200 bg-white">
+                  <BillSummary />
+                  <button
+                    disabled={isProceedDisabled}
+                    onClick={handlePlaceOrder}
+                    className="w-full bg-[#387c40] text-white font-bold py-3 rounded-lg hover:bg-[#144a31] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {isProceedDisabled
+                      ? "Select Address to Proceed"
+                      : "Place Order"}
+                  </button>
+                </footer>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

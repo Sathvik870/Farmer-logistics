@@ -168,7 +168,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="absolute top-full mt-2 left-0 z-50 bg-white rounded-lg shadow-2xl w-96 overflow-hidden border border-gray-200"
+          className="absolute top-full mt-2 right-0 z-50 bg-white rounded-lg shadow-2xl w-full overflow-hidden border border-gray-200"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}

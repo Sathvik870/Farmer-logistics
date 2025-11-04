@@ -1,41 +1,69 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { ProductWithImage } from "../../pages/admin/ProductsPage";
 import { useCart } from "../../context/customer/cart/useCart.ts";
-import { HiPlus, HiMinus } from "react-icons/hi";
-
-interface ProductCardProps {
-  product: ProductWithImage;
-}
+import { HiPlus, HiMinus, HiExclamation } from "react-icons/hi";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface QuantityStepperProps {
-  productId: number;
+  product: ProductWithImage;
   onEditingChange: (isEditing: boolean) => void;
 }
 
 const QuantityStepper: React.FC<QuantityStepperProps> = ({
-  productId,
+  product,
   onEditingChange,
 }) => {
-  const { getItemQuantity, updateItemQuantity, updateItemQuantityLive } =
+  const { getItemQuantity, incrementItem, decrementItem, setItemQuantity } =
     useCart();
-  const quantity = getItemQuantity(productId);
-
+  const quantity = getItemQuantity(product.product_id);
+  const isAtMaxStock = quantity >= product.saleable_quantity;
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState(String(quantity)); 
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     onEditingChange(isEditing);
     if (isEditing && inputRef.current) {
+      setInputValue(quantity === 0 ? "" : String(quantity));
       inputRef.current.focus();
       inputRef.current.select();
+    } else {
+      setShowTooltip(false);
     }
-  }, [isEditing, onEditingChange]);
+  }, [isEditing, onEditingChange, quantity]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+
+    const sanitizedValue = value.replace(/[^0-9]/g, "");
+
+    if (sanitizedValue === '') {
+      setShowTooltip(false); 
+      return;
+    }
+
+    const numericValue = parseInt(sanitizedValue, 10);
+
+    if (numericValue > product.saleable_quantity) {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 2000);
+    } else {
+      setShowTooltip(false);
+    }
+  };
 
   const handleFinalUpdate = () => {
     setIsEditing(false);
-    let finalQuantity = Math.floor(quantity);
-    if (finalQuantity < 0) finalQuantity = 0;
-    updateItemQuantity(productId, finalQuantity);
+    let finalQuantity = parseInt(inputValue, 10);
+    if (isNaN(finalQuantity)) {
+      finalQuantity = 0;
+    }
+    if (finalQuantity > product.saleable_quantity) {
+      finalQuantity = product.saleable_quantity;
+    }
+    setItemQuantity(product.product_id, finalQuantity);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -45,9 +73,9 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between bg-[#387c40] text-white font-bold rounded-lg w-24 h-9">
+    <div className="relative flex items-center justify-between bg-[#387c40] text-white font-bold rounded-lg w-24 h-9">
       <button
-        onClick={() => updateItemQuantity(productId, quantity - 1)}
+        onClick={() => decrementItem(product.product_id)}
         className="px-3 py-1 h-full flex-shrink-0 flex items-center justify-center rounded-l-lg transition-colors"
       >
         <HiMinus size={16} />
@@ -56,10 +84,10 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
         {isEditing ? (
           <input
             ref={inputRef}
-            type="number"
-            min="0"
-            value={quantity === 0 && isEditing ? "" : String(quantity)}
-            onChange={(e) => updateItemQuantityLive(productId, e.target.value)}
+            type="text"
+            inputMode="numeric"
+            value={inputValue}
+            onChange={handleInputChange}
             onBlur={handleFinalUpdate}
             onKeyDown={handleKeyDown}
             className="w-full text-center bg-transparent outline-none appearance-none [-moz-appearance:textfield]"
@@ -75,16 +103,30 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
       </div>
 
       <button
-        onClick={() => updateItemQuantity(productId, quantity + 1)}
-        className="px-3 py-1 h-full flex-shrink-0 flex items-center justify-center rounded-r-lg transition-colors"
+        onClick={() => incrementItem(product.product_id)}
+        disabled={isAtMaxStock}
+        className="px-3 py-1 h-full flex-shrink-0 flex items-center justify-center rounded-r-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <HiPlus size={16} />
       </button>
+      <AnimatePresence>
+        {showTooltip && (
+          <motion.div
+            className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded-md py-1.5 px-3 shadow-lg whitespace-nowrap flex items-center gap-1.5"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+          >
+            <HiExclamation className="text-yellow-400" />
+            Max quantity is {product.saleable_quantity}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<{ product: ProductWithImage }> = ({ product }) => {
   const { addToCart, getItemQuantity } = useCart();
   const quantity = getItemQuantity(product.product_id);
 
@@ -121,7 +163,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </button>
         ) : (
           <QuantityStepper
-            productId={product.product_id}
+            product={product}
             onEditingChange={setIsStepperEditing}
           />
         )}

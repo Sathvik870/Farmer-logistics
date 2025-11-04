@@ -164,6 +164,12 @@ const PurchaseOrdersPage: React.FC = () => {
                 requestSort={requestSort}
               />
               <SortableHeader
+                title="Supplier Contact"
+                sortKey="supplier_contact"
+                sortConfig={sortConfig}
+                requestSort={requestSort}
+              />
+              <SortableHeader
                 title="Date"
                 sortKey="purchase_date"
                 sortConfig={sortConfig}
@@ -306,6 +312,9 @@ const AccordionRow: React.FC<{
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-gray-600">
           {order.supplier_name}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+          {order.supplier_contact}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-gray-600">
           {formattedDate}

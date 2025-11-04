@@ -11,6 +11,8 @@ interface ProductDetails {
   cost_price: number;
   selling_price: number;
   available_quantity: number;
+  sell_per_unit_qty: number;
+  selling_unit: string;
   imageUrl?: string | null;
 }
 
@@ -126,6 +128,11 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
               <DetailRow
                 label="Description"
                 value={product.product_description}
+              />
+              <DetailRow label="Selling Unit" value={product.selling_unit} />
+              <DetailRow
+                label="Sell Per Unit Quantity"
+                value={product.sell_per_unit_qty}
               />
             </div>
           </div>

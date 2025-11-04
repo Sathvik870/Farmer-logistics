@@ -18,7 +18,7 @@ const CartItemCard: React.FC<CartItemCardProps> = ({ item }) => {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <CartQuantityStepper productId={item.product_id} />
+        <CartQuantityStepper item={item} />
         <p className="font-semibold text-sm w-16 text-right">₹{(item.selling_price * item.quantity).toFixed(2)}</p>
       </div>
     </div>

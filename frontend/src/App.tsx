@@ -7,6 +7,7 @@ import { LocationProvider } from "./context/customer/location/LocationProvider";
 import { AlertProvider } from "./context/common/AlertContext";
 import { CategoryProvider } from "./context/customer/category/CategoryProvider";
 import { SearchProvider } from "./context/customer/search/SearchProvider";
+import { ProductProvider } from "./context/customer/product/ProductProvider";
 
 import AdminLogin from "./pages/admin/AdminLoginPage";
 // import AdminSignup from "./pages/admin/AdminSignupPage";
@@ -31,52 +32,54 @@ function App() {
       <AdminAuthProvider>
         <AlertProvider>
           <LocationProvider>
-            <CartProvider>
-              <SearchProvider>
-                <CategoryProvider>
-                  <Router>
-                    <Routes>
-                      <Route element={<CustomerLayout />}>
-                        <Route path="/" element={<ShoppingPage />} />
-                        <Route path="/cart" element={<CartPage />} />
-                        {/* Add other customer pages here, e.g.: */}
-                        {/* <Route path="/profile" element={<CustomerProfilePage />} /> */}
-                        {/* <Route path="/category/:categoryName" element={<CategoryPage />} /> */}
-                      </Route>
-                      <Route element={<PublicOnlyRoute />}>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/signup" element={<SignupPage />} />
-                      </Route>
-
-                      <Route path="/admin/login" element={<AdminLogin />} />
-                      {/* <Route path="/admin/signup" element={<AdminSignup />} /> */}
-
-                      {/* ProtectedRoutes */}
-                      <Route element={<AdminProtectedRoute />}>
-                        <Route element={<MainLayout />}>
-                          <Route
-                            path="/admin/dashboard"
-                            element={<Dashboard />}
-                          />
-                          <Route
-                            path="/admin/products"
-                            element={<ProductsPage />}
-                          />
-                          <Route
-                            path="/admin/purchase-orders"
-                            element={<PurchaseOrdersPage />}
-                          />
+            <ProductProvider>
+              <CartProvider>
+                <SearchProvider>
+                  <CategoryProvider>
+                    <Router>
+                      <Routes>
+                        <Route element={<CustomerLayout />}>
+                          <Route path="/" element={<ShoppingPage />} />
+                          <Route path="/cart" element={<CartPage />} />
+                          {/* Add other customer pages here, e.g.: */}
+                          {/* <Route path="/profile" element={<CustomerProfilePage />} /> */}
+                          {/* <Route path="/category/:categoryName" element={<CategoryPage />} /> */}
                         </Route>
-                      </Route>
-                      <Route
-                        path="*"
-                        element={<div>404 - Page Not Found</div>}
-                      />
-                    </Routes>
-                  </Router>
-                </CategoryProvider>
-              </SearchProvider>
-            </CartProvider>
+                        <Route element={<PublicOnlyRoute />}>
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route path="/signup" element={<SignupPage />} />
+                        </Route>
+
+                        <Route path="/admin/login" element={<AdminLogin />} />
+                        {/* <Route path="/admin/signup" element={<AdminSignup />} /> */}
+
+                        {/* ProtectedRoutes */}
+                        <Route element={<AdminProtectedRoute />}>
+                          <Route element={<MainLayout />}>
+                            <Route
+                              path="/admin/dashboard"
+                              element={<Dashboard />}
+                            />
+                            <Route
+                              path="/admin/products"
+                              element={<ProductsPage />}
+                            />
+                            <Route
+                              path="/admin/purchase-orders"
+                              element={<PurchaseOrdersPage />}
+                            />
+                          </Route>
+                        </Route>
+                        <Route
+                          path="*"
+                          element={<div>404 - Page Not Found</div>}
+                        />
+                      </Routes>
+                    </Router>
+                  </CategoryProvider>
+                </SearchProvider>
+              </CartProvider>
+            </ProductProvider>
           </LocationProvider>
         </AlertProvider>
       </AdminAuthProvider>

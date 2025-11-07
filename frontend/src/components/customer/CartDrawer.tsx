@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState ,useEffect ,useRef } from "react";
 import { useLocation } from "../../context/customer/location/useLocation";
 import { useCart } from "../../context/customer/cart/useCart";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,9 @@ import {
 import CartItemCard from "./CartItemCard";
 import DeliveryLocation from "./DeliveryLocation";
 import LocationPicker from "./LocationPicker";
-
+import { useAlert } from "../../context/common/AlertContext";
+import api from "../../api";
+import { useProducts } from '../../context/customer/product/useProducts';
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -50,13 +52,43 @@ const BillSummary: React.FC = () => {
 };
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const { cartItems, cartCount } = useCart();
+  const { cartItems, cartCount, clearCart, validateCart } = useCart();
   const { location } = useLocation();
+  const { showAlert } = useAlert();
+  const { fetchProducts } = useProducts();
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const isProceedDisabled = !location;
   const locationButtonRef = useRef<HTMLDivElement>(null);
-  const handlePlaceOrder = () => {
-    // Implement place order logic here
+
+  useEffect(() => {
+    if (isOpen && cartItems.length > 0) {
+      validateCart();
+    }
+  }, [isOpen]); 
+
+  const handlePlaceOrder = async () => {
+    setIsPlacingOrder(true);
+    try {
+      const response = await api.post("/api/customer/orders", { cartItems });
+      if (response.status === 201) {
+        showAlert("Order placed successfully!", "success");
+        clearCart();
+        onClose();
+        fetchProducts();
+      } else {
+        showAlert("Failed to place order. Please try again.", "error");
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Failed to place order.";
+      showAlert(errorMessage, "error");
+      if (errorMessage.toLowerCase().includes("insufficient stock")) {
+        fetchProducts();
+        validateCart();
+      }
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
   return (
     <>
@@ -117,11 +149,13 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                 <footer className="flex-shrink-0 p-4 space-y-4 border-t border-gray-200 bg-white">
                   <BillSummary />
                   <button
-                    disabled={isProceedDisabled}
+                    disabled={isProceedDisabled || isPlacingOrder}
                     onClick={handlePlaceOrder}
                     className="w-full bg-[#387c40] text-white font-bold py-3 rounded-lg hover:bg-[#144a31] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {isProceedDisabled
+                    {isPlacingOrder
+                      ? "Placing Order..."
+                      : isProceedDisabled
                       ? "Select Address to Proceed"
                       : "Place Order"}
                   </button>

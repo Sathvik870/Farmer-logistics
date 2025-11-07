@@ -13,6 +13,7 @@ const adminStockRoutes = require("./src/routes/admin/stock.routes");
 
 const customerAuthRoutes = require("./src/routes/customer/auth.routes");
 const customerUserRoutes = require("./src/routes/customer/user.routes");
+const customerOrderRoutes = require("./src/routes/customer/order.routes");
 
 const publicProductRoutes = require("./src/routes/public/product.routes");
 
@@ -70,6 +71,7 @@ app.use("/api/admin", adminRouter);
 const customerRouter = express.Router();
 customerRouter.use("/auth", customerAuthRoutes);
 customerRouter.use("/users", customerUserRoutes);
+customerRouter.use("/orders", customerOrderRoutes); 
 
 app.use("/api/customer", customerRouter);
 

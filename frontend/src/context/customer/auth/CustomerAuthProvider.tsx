@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import api from "../../../api.ts";
-
 import { CustomerAuthContext, type Customer } from "./CustomerAuthContext.ts";
 
 export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
@@ -38,9 +37,10 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (clearCart: () => void) => {
     localStorage.removeItem("customerAuthToken");
     setCustomer(null);
+    clearCart(); 
   };
 
   return (

@@ -22,7 +22,7 @@ export interface CustomerAuthContextType {
   customer: Customer | null;
   isLoading: boolean;
   login: (token: string) => Promise<void>;
-  logout: () => void;
+  logout:  (clearCart: () => void) => void;
 }
 
 export const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);

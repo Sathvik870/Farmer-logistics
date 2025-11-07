@@ -5,7 +5,6 @@ import FloatingCartButton from "../../components/customer/FloatingCartButton";
 import CartDrawer from "../../components/customer/CartDrawer";
 import GuestLoginModal from "../../components/customer/GuestLoginModal";
 import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth";
-
 const CustomerLayout: React.FC = () => {
   const { isAuthenticated } = useCustomerAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);

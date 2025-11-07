@@ -1,10 +1,51 @@
-import { useState, type ReactNode } from "react";
-
-import { CartContext, type CartItem } from "./CartContext.ts";
+import { useState, useEffect, type ReactNode } from "react";
+import { useProducts } from "../product/useProducts";
+import { CartContext, type CartItem ,type CartValidationMessages } from "./CartContext.ts";
 import type { ProductWithImage } from "../../../pages/admin/ProductsPage.tsx";
+const CART_STORAGE_KEY = 'farmerLogisticsCart';
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error("Failed to parse cart from localStorage", error);
+      return [];
+    }
+  });
+
+  const { products, fetchProducts } = useProducts();
+  const [validationMessages, setValidationMessages] = useState<CartValidationMessages>({});
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    } catch (error) {
+      console.error("Failed to save cart to localStorage", error);
+    }
+  }, [cartItems]);
+
+  const validateCart = async () => {
+    await fetchProducts();
+    const newMessages: CartValidationMessages = {};
+    const updatedCartItems = cartItems.map(cartItem => {
+      const liveProduct = products.find(p => p.product_id === cartItem.product_id);
+      let updatedQuantity = cartItem.quantity;
+      
+      if (!liveProduct || liveProduct.saleable_quantity <= 0) {
+        newMessages[cartItem.product_id] = "Out of Stock";
+        updatedQuantity = 0;
+      } else if (cartItem.quantity > liveProduct.saleable_quantity) {
+        newMessages[cartItem.product_id] = `Only ${liveProduct.saleable_quantity} available`;
+      }
+
+      return { ...cartItem, quantity: updatedQuantity };
+    });
+
+    setValidationMessages(newMessages);
+    setCartItems(updatedCartItems.filter(item => item.quantity > 0));
+  };
 
   const addToCart = (product: ProductWithImage) => {
     if (product.saleable_quantity < 1) return;
@@ -21,6 +62,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return [...prevItems, { ...product, quantity: 1 }];
     });
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    setValidationMessages({});
+    localStorage.removeItem(CART_STORAGE_KEY); 
   };
 
   const incrementItem = (productId: number) => {
@@ -92,7 +139,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         getItemQuantity,
         cartCount,
         totalPrice,
-
+        clearCart,
+        validationMessages,
+        validateCart,
       }}
     >
       {children}

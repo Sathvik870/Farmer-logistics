@@ -15,6 +15,7 @@ export interface Customer {
   latitude: number | null;
   longitude: number | null;
   is_guest_user: boolean;
+  landmark: string | null;
 }
 
 export interface CustomerAuthContextType {

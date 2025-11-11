@@ -17,7 +17,10 @@ const transports = [
     datePattern: "YYYY-MM-DD",
     zippedArchive: true,
     maxSize: "20m",
-    maxFiles: "5d",
+    maxFiles: "10d",
+    format: winston.format.printf(
+      (info) => `[${info.level.toUpperCase()}]: ${info.message}`
+    ),
   }),
 
   new winston.transports.DailyRotateFile({
@@ -26,25 +29,23 @@ const transports = [
     datePattern: "YYYY-MM-DD",
     zippedArchive: true,
     maxSize: "20m",
-    maxFiles: "5d",
+    maxFiles: "10d",
+    format: winston.format.printf(
+      (info) => `[${info.level.toUpperCase()}]: ${info.message}`
+    ),
   }),
 ];
 
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
-    winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+    winston.format.colorize(),
     winston.format.printf(
-      (info) =>
-        `${info.timestamp} [${info.level.toUpperCase()}]: ${info.message}`
+      (info) => `[${info.level.toUpperCase()}]: ${info.message}`
     )
   ),
-  transports: transports,
+  transports,
   exitOnError: false,
 });
-
-logger.info(
-  "Logger initialized. It will now log to console and daily-rotated files."
-);
 
 module.exports = logger;

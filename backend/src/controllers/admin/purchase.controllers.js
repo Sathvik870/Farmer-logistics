@@ -24,6 +24,7 @@ exports.getAllPurchaseOrders = async (req, res) => {
     res.status(200).json(rows);
   } catch (error) {
     logger.error(`[PO] Error fetching all purchase orders: ${error.message}`);
+    console.error(error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
@@ -54,6 +55,7 @@ exports.getPurchaseOrderDetails = async (req, res) => {
     res.status(200).json(rows);
   } catch (error) {
     logger.error(`[PO] Error fetching items for PO ${code}: ${error.message}`);
+    console.error(error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
@@ -154,6 +156,7 @@ exports.createPurchaseOrder = async (req, res) => {
     logger.error(
       `[PO] !!! CRITICAL FAILURE !!! Transaction rolled back. Reason: ${error.message}`
     );
+    console.error(error);
     res.status(500).json({
       message: "Internal server error: PO creation failed.",
       error: error.message,

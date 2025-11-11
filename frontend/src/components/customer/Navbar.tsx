@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { Link, useLocation as useRouteLocation } from "react-router-dom";
 import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth";
 import { useLocation } from "../../context/customer/location/useLocation";
 import LocationPicker from "./LocationPicker.tsx";
@@ -17,6 +17,9 @@ import { useCart } from "../../context/customer/cart/useCart.ts";
 import { useCategory } from "../../context/customer/category/useCategory.ts";
 import { useSearch } from "../../context/customer/search/useSearch.ts";
 import GuestLoginModal from "./GuestLoginModal";
+import ProfileDropdown from "./ProfileDropdown";
+import { AnimatePresence } from "framer-motion";
+import useOnClickOutside from "../../hooks/useOnClickOutside.ts";
 
 const categories = [
   { name: "All", icon: <IoBagHandleOutline size={20} /> },
@@ -37,7 +40,24 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const { searchTerm, setSearchTerm } = useSearch();
   const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const routeLocation = useRouteLocation();
+  const hideCategoryBarOnPages = ["/profile", "/orders"];
+  const shouldShowCategoryBar = !hideCategoryBarOnPages.includes(
+    routeLocation.pathname
+  );
 
+  useOnClickOutside(dropdownRef as React.RefObject<HTMLElement>, () =>
+    setIsProfileDropdownOpen(false)
+  );
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      setIsProfileDropdownOpen((prev) => !prev);
+    }
+  };
   useEffect(() => {
     if (
       isAuthenticated &&
@@ -68,7 +88,6 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
       setIsGuestModalOpen(true);
     }
   };
-
 
   return (
     <>
@@ -106,7 +125,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                 <HiOutlineSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
-                  placeholder='Search your favorite products, e.g., Onions'
+                  placeholder="Search your favorite products, e.g., Onions"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full h-12 pl-12 pr-4 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-[#387c40]"
@@ -114,19 +133,29 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               </div>
             </div>
             <div className="flex items-center gap-4 md:gap-6 shrink-0">
-              <Link
-                to={isAuthenticated ? "/profile" : "/login"}
-                className="flex flex-col items-center text-xs md:text-sm font-medium text-gray-700 hover:text-[#387c40]"
-              >
-                <HiOutlineUserCircle size={24} />
-                <span>
-                  {isAuthenticated && customer ? (
-                    customer.is_guest_user ? customer.customer_code : customer.first_name
-                  ) : (
-                    "Login"
+              <div className="relative" ref={dropdownRef}>
+                <Link
+                  to={isAuthenticated ? "/profile" : "/login"}
+                  className="flex flex-col items-center text-xs md:text-sm font-medium text-gray-700 hover:text-[#387c40]"
+                  onClick={handleProfileClick}
+                >
+                  <HiOutlineUserCircle size={24} />
+                  <span>
+                    {isAuthenticated && customer
+                      ? customer.is_guest_user
+                        ? customer.customer_code
+                        : customer.first_name
+                      : "Login"}
+                  </span>
+                </Link>
+                <AnimatePresence>
+                  {isAuthenticated && isProfileDropdownOpen && (
+                    <ProfileDropdown
+                      onClose={() => setIsProfileDropdownOpen(false)}
+                    />
                   )}
-                </span>
-              </Link>
+                </AnimatePresence>
+              </div>
               <button
                 onClick={onCartClick}
                 className="relative flex flex-col items-center text-xs md:text-sm font-medium text-gray-700 hover:text-[#387c40]"
@@ -146,7 +175,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               <HiOutlineSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder='Onions, Apples...'
+                placeholder="Onions, Apples..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-10 pl-10 pr-4 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-1 focus:ring-[#387c40]"
@@ -154,28 +183,30 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             </div>
           </div>
         </div>
-        <div className="border-t border-gray-200">
-          <nav className="container mx-auto px-4 flex items-center gap-6 overflow-x-auto py-2">
-            {categories.map((category) => (
-              <button
-                key={category.name}
-                onClick={() => setSelectedCategory(category.name)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
-                  selectedCategory === category.name
-                    ? "bg-green-100 text-[#387c40]"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {category.icon}
-                {category.name}
-              </button>
-            ))}
-          </nav>
-        </div>
+        {shouldShowCategoryBar && (
+          <div className="border-t border-gray-200">
+            <nav className="container mx-auto px-4 flex items-center gap-6 overflow-x-auto py-2">
+              {categories.map((category) => (
+                <button
+                  key={category.name}
+                  onClick={() => setSelectedCategory(category.name)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
+                    selectedCategory === category.name
+                      ? "bg-green-100 text-[#387c40]"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {category.icon}
+                  {category.name}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
-      <GuestLoginModal 
-        isOpen={isGuestModalOpen} 
-        onClose={() => setIsGuestModalOpen(false)} 
+      <GuestLoginModal
+        isOpen={isGuestModalOpen}
+        onClose={() => setIsGuestModalOpen(false)}
       />
     </>
   );

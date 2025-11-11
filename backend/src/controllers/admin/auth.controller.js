@@ -185,7 +185,7 @@ exports.login = async (req, res) => {
     };
 
     const token = jwt.sign(tokenPayload, process.env.ADMIN_JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "365d",
     });
 
     logger.info(`[AUTH] Login successful for user: ${username}`);

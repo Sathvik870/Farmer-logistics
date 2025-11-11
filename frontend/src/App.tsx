@@ -19,6 +19,8 @@ import LoginPage from "./pages/customer/CustomerLoginPage";
 import SignupPage from "./pages/customer/CustomerSignupPage";
 import ShoppingPage from "./pages/customer/ShoppingPage";
 import CartPage from "./pages/customer/CartPage";
+import ProfilePage from "./pages/customer/ProfilePage";
+import OrdersPage from "./pages/customer/OrdersPage";
 
 import MainLayout from "./layouts/admin/MainLayout";
 import CustomerLayout from "./layouts/customer/CustomerLayout";
@@ -41,9 +43,8 @@ function App() {
                         <Route element={<CustomerLayout />}>
                           <Route path="/" element={<ShoppingPage />} />
                           <Route path="/cart" element={<CartPage />} />
-                          {/* Add other customer pages here, e.g.: */}
-                          {/* <Route path="/profile" element={<CustomerProfilePage />} /> */}
-                          {/* <Route path="/category/:categoryName" element={<CategoryPage />} /> */}
+                          <Route path="/profile" element={<ProfilePage />} />
+                          <Route path="/orders" element={<OrdersPage />} />
                         </Route>
                         <Route element={<PublicOnlyRoute />}>
                           <Route path="/login" element={<LoginPage />} />

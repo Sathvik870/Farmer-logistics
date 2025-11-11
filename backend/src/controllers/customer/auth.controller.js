@@ -95,7 +95,7 @@ exports.signup = async (req, res) => {
         role: "customer",
       },
       process.env.CUSTOMER_JWT_SECRET,
-      { expiresIn: "5d" }
+      { expiresIn: "365d" }
     );
     res.status(201).json({
       message: "Customer account created successfully!",
@@ -150,7 +150,7 @@ exports.login = async (req, res) => {
       role: "customer",
     };
     const token = jwt.sign(tokenPayload, process.env.CUSTOMER_JWT_SECRET, {
-      expiresIn: "5d",
+      expiresIn: "365d",
     });
 
     logger.info(
@@ -278,7 +278,7 @@ exports.googleAuthSignupOrLogin = async (req, res) => {
         role: "customer",
       },
       process.env.CUSTOMER_JWT_SECRET,
-      { expiresIn: "5d" }
+      { expiresIn: "365d" }
     );
 
     return res.status(200).json({
@@ -357,7 +357,7 @@ exports.googleAuthLoginOnly = async (req, res) => {
         role: "customer",
       },
       process.env.CUSTOMER_JWT_SECRET,
-      { expiresIn: "5d" }
+      { expiresIn: "365d" }
     );
 
     logger.info(
@@ -435,7 +435,7 @@ exports.guestLogin = async (req, res) => {
     };
 
     const token = jwt.sign(tokenPayload, process.env.CUSTOMER_JWT_SECRET, {
-      expiresIn: "5d",
+      expiresIn: "365d",
     });
 
     res.status(200).json({

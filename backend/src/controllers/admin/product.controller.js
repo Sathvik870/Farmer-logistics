@@ -35,6 +35,7 @@ exports.getAllProducts = async (req, res) => {
 
     res.status(200).json(rows);
   } catch (error) {
+    console.error(error);
     logger.error(`[PRODUCT] Error fetching products: ${error.message}`, {
       stack: error.stack,
     });
@@ -110,7 +111,7 @@ exports.createProduct = async (req, res) => {
       `[PRODUCT] Error creating product '${product_name}': ${error.message}`,
       { stack: error.stack }
     );
-
+    console.error(error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
@@ -246,6 +247,7 @@ exports.updateProduct = async (req, res) => {
       `[PRODUCT] Error updating product with ID ${req.params.id}: ${error.message}`,
       { stack: error.stack }
     );
+    console.error(error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -275,6 +277,7 @@ exports.deleteProduct = async (req, res) => {
       `[PRODUCT] Error deleting product with ID ${id}: ${error.message}`,
       { stack: error.stack }
     );
+    console.error(error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
@@ -328,6 +331,7 @@ exports.getProductById = async (req, res) => {
       `[PRODUCT] Error fetching full details for product ID ${id}: ${error.message}`,
       { stack: error.stack }
     );
+    console.error(error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });

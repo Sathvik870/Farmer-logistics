@@ -29,6 +29,7 @@ exports.getUserProfile = async (req, res) => {
     logger.error(
       `[USER] Error fetching profile for user ID ${userId}: ${error.message}`
     );
+    console.error(error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });

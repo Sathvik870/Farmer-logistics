@@ -99,6 +99,7 @@ exports.placeOrder = async (req, res) => {
     logger.error(
       `[ORDER] Error placing order for customer ${customer_id}: ${error.message}. Transaction rolled back.`
     );
+    console.error(error);
     res
       .status(500)
       .json({ message: error.message || "Failed to place order." });

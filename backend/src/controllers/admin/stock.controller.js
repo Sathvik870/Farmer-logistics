@@ -75,6 +75,7 @@ exports.batchUpdateStock = async (req, res) => {
     logger.error(
       `[STOCK] Batch update failed and was rolled back: ${error.message}`
     );
+    console.error(error);
     res
       .status(409)
       .json({

@@ -93,7 +93,6 @@ CREATE TABLE  sales_orders (
     CONSTRAINT sales_orders_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES  customers(customer_id) ON DELETE CASCADE
 );
 
-
 Table name : sales_order_items
 
 CREATE TABLE  sales_order_items (
@@ -105,6 +104,47 @@ CREATE TABLE  sales_order_items (
     CONSTRAINT sales_order_items_sales_order_id_fkey FOREIGN KEY (sales_order_id) REFERENCES  sales_orders(sales_order_id) ON DELETE CASCADE,
     CONSTRAINT sales_order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
 );
+
+-- Sequence for auto-generating invoice codes
+CREATE SEQUENCE invoice_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+-- Function to generate formatted invoice codes like INV-0001
+CREATE FUNCTION generate_invoice_code() RETURNS trigger
+    LANGUAGE plpgsql
+AS $$
+BEGIN
+    NEW.invoice_code := 'INV-' || LPAD(nextval('invoice_code_seq')::TEXT, 4, '0');
+    RETURN NEW;
+END;
+$$;
+
+-- Table definition
+CREATE TABLE invoices (
+    invoice_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    invoice_code character varying(20) UNIQUE,
+    sales_order_id integer NOT NULL,
+    customer_id integer NOT NULL,
+    invoice_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    subtotal numeric(12,2) NOT NULL,
+    delivery_charges numeric(12,2) DEFAULT 0,
+    total_amount numeric(12,2) NOT NULL,
+    shipping_address VARCHAR(255);
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT invoices_sales_order_id_fkey FOREIGN KEY (sales_order_id) REFERENCES sales_orders(sales_order_id) ON DELETE CASCADE,
+    CONSTRAINT invoices_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+);
+
+-- Auto-generate invoice code if not provided
+CREATE TRIGGER set_invoice_code 
+BEFORE INSERT ON invoices 
+FOR EACH ROW 
+WHEN (NEW.invoice_code IS NULL) 
+EXECUTE FUNCTION generate_invoice_code();
 
 
 Table name : purchase_orders

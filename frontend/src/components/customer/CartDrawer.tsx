@@ -1,5 +1,6 @@
-import React, { useState ,useEffect ,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "../../context/customer/location/useLocation";
+import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth";
 import { useCart } from "../../context/customer/cart/useCart";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,7 +13,7 @@ import DeliveryLocation from "./DeliveryLocation";
 import LocationPicker from "./LocationPicker";
 import { useAlert } from "../../context/common/AlertContext";
 import api from "../../api";
-import { useProducts } from '../../context/customer/product/useProducts';
+import { useProducts } from "../../context/customer/product/useProducts";
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -53,6 +54,8 @@ const BillSummary: React.FC = () => {
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const { cartItems, cartCount, clearCart, validateCart } = useCart();
+  const { customer } = useCustomerAuth();
+  console.log("Customer Details in CartDrawer:", customer);
   const { location } = useLocation();
   const { showAlert } = useAlert();
   const { fetchProducts } = useProducts();
@@ -65,26 +68,80 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     if (isOpen && cartItems.length > 0) {
       validateCart();
     }
-  }, [isOpen]); 
+  }, [isOpen]);
 
   const handlePlaceOrder = async () => {
     setIsPlacingOrder(true);
     try {
-      const response = await api.post("/api/customer/orders", { cartItems });
-      if (response.status === 201) {
-        showAlert("Order placed successfully!", "success");
+      const response = await api.post(
+        "/api/customer/orders",
+        {
+          cartItems: cartItems,
+          customer_details: {
+            ...customer,
+            delivery_charges: 50.0,
+          },
+        },
+        {
+          responseType: "blob",
+        }
+      );
+      console.log(customer)
+      if (response.headers["content-type"] === "application/pdf") {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+
+        let filename = "invoice.pdf";
+        const contentDisposition = response.headers["content-disposition"];
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch.length === 2)
+            filename = filenameMatch[1];
+        }
+        link.setAttribute("download", filename);
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        showAlert("Order placed and invoice downloaded!", "success");
         clearCart();
         onClose();
         fetchProducts();
       } else {
-        showAlert("Failed to place order. Please try again.", "error");
+        const responseText = await (response.data as Blob).text();
+        const responseJson = JSON.parse(responseText);
+        showAlert(responseJson.message, "warning");
+        clearCart();
+        onClose();
+        fetchProducts();
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Failed to place order.";
-      showAlert(errorMessage, "error");
-      if (errorMessage.toLowerCase().includes("insufficient stock")) {
-        fetchProducts();
-        validateCart();
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.toString() === "[object Blob]"
+      ) {
+        const errorBlobText = await (error.response.data as Blob).text();
+        try {
+          const errorJson = JSON.parse(errorBlobText);
+          const errorMessage = errorJson.message || "Failed to place order.";
+          showAlert(errorMessage, "error");
+          if (errorMessage.toLowerCase().includes("insufficient stock")) {
+            validateCart();
+          }
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+          showAlert("An unknown error occurred.", "error");
+        }
+      } else {
+        const errorMessage =
+          error.response?.data?.message || "Failed to place order.";
+        showAlert(errorMessage, "error");
+        if (errorMessage.toLowerCase().includes("insufficient stock")) {
+          validateCart();
+        }
       }
     } finally {
       setIsPlacingOrder(false);

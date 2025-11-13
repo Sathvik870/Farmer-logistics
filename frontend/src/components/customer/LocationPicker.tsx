@@ -1,3 +1,4 @@
+//LocationPicker.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L, { LatLng } from "leaflet";
@@ -63,7 +64,10 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ isOpen, onClose }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
   const mapRef = useRef<L.Map>(null);
-  const isConfirmDisabled = !currentAddress || currentAddress === initialAddress || currentAddress.includes("Fetching");
+  const isConfirmDisabled =
+    !currentAddress ||
+    currentAddress === initialAddress ||
+    currentAddress.includes("Fetching");
   useEffect(() => {
     if (isOpen && location) {
       setMapCenter([location.lat, location.lng]);
@@ -168,7 +172,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="absolute top-full mt-2 right-0 z-50 bg-white rounded-lg shadow-2xl w-full overflow-hidden border border-gray-200"
+          className="absolute top-full mt-2 left-0 z-50 bg-white rounded-lg shadow-2xl w-96 max-w-sm overflow-hidden border border-gray-200"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}

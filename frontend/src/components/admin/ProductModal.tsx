@@ -115,7 +115,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   const isSaveDisabled = !hasFormChanged();
 
-  // ✅ Updated handleChange with dynamic unit logic
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -131,8 +130,23 @@ const ProductModal: React.FC<ProductModalProps> = ({
         unit_type: value,
         selling_unit: allowedUnits.includes(prev.selling_unit || "")
           ? prev.selling_unit
-          : allowedUnits[0], // default compatible unit
+          : allowedUnits[0],
       }));
+    } else if (isNumberField) {
+      if (value === "") {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: "",
+        }));
+      } else {
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          setFormData((prev) => ({
+            ...prev,
+            [name]: numericValue,
+          }));
+        }
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -190,7 +204,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
 
-  // ✅ Determine available selling units dynamically
   const availableSellingUnits =
     unitConverionMap[formData.unit_type || ""] ||
     (formData.unit_type ? [formData.unit_type] : []);
@@ -360,7 +373,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   name="cost_price"
                   type="number"
                   step="0.01"
-                  value={formData.cost_price || 0}
+                  value={
+                    formData.cost_price === 0 ? 0 : formData.cost_price || ""
+                  }
                   onChange={handleChange}
                   required
                   className={inputStyle}
@@ -377,7 +392,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   name="selling_price"
                   type="number"
                   step="0.01"
-                  value={formData.selling_price || 0}
+                  value={
+                    formData.selling_price === 0
+                      ? 0
+                      : formData.selling_price || ""
+                  }
                   onChange={handleChange}
                   required
                   className={inputStyle}
@@ -393,14 +412,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   id="sell_per_unit_qty"
                   name="sell_per_unit_qty"
                   type="number"
-                  value={formData.sell_per_unit_qty}
+                  value={
+                    formData.sell_per_unit_qty === 0
+                      ? 0
+                      : formData.sell_per_unit_qty || ""
+                  }
                   onChange={handleChange}
                   required
                   className={inputStyle}
                 />
               </div>
 
-              {/* ✅ Selling Unit Dropdown (Dynamic) */}
+              {/* Selling Unit */}
               <div>
                 <label htmlFor="selling_unit" className={labelStyle}>
                   Selling Unit

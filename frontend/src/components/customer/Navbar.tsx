@@ -99,7 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                 <Link to="/" className="text-2xl font-bold text-[#387c40]">
                   Farmer Logistics
                 </Link>
-                <div className="relative md:border-l md:ml-4 md:pl-4">
+                <div className="relative md:border-l md:ml-4 md:pl-4 z-50">
                   <button
                     onClick={handleLocationClick}
                     className="flex items-center gap-1 text-sm text-gray-500 font-semibold"

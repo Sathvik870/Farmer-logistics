@@ -19,6 +19,7 @@ import {
   HiOutlineSwitchHorizontal,
 } from "react-icons/hi";
 
+
 export interface Product {
   product_id: number;
   product_code: string;
@@ -383,7 +384,6 @@ const ProductsPage: React.FC = () => {
           </button>
         </div>
       </div>
-
       <div
         className="ag-theme-alpine custom-ag-theme"
         style={{ height: 600, width: "100%" }}

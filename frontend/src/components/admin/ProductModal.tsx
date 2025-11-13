@@ -1,4 +1,4 @@
-//ProductModal.tsx
+// ProductModal.tsx
 import { useAlert } from "../../context/common/AlertContext";
 import api from "../../api";
 import React, { useState, useEffect } from "react";
@@ -27,6 +27,7 @@ const unitOptions = [
   "bunch",
 ];
 
+// Map of allowed selling units for each cost price unit
 const UNIT_CONVERSION_MAP: Record<string, string[]> = {
   kg: ["kg", "gm"],
   gm: ["gm", "kg"],
@@ -49,20 +50,6 @@ const primaryButtonStyle =
 const secondaryButtonStyle =
   "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
 
-const sellingUnitOptions = [
-  "gm",
-  "kg",
-  "piece",
-  "packet",
-  "ltr",
-  "ml",
-  "dozen",
-  "box",
-  "bottle",
-  "can",
-  "bunch",
-];
-
 const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
   onClose,
@@ -75,6 +62,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLargePreviewOpen, setIsLargePreviewOpen] = useState(false);
   const { showAlert } = useAlert();
+
   useEffect(() => {
     let data;
     if (productToEdit) {
@@ -106,6 +94,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   }, [previewUrl]);
 
   if (!isOpen) return null;
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -113,6 +102,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
+
   const hasFormChanged = () => {
     if (selectedFile) return true;
     for (const key in initialData) {
@@ -122,11 +112,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
         return true;
       }
     }
-
     return false;
   };
+
   const isSaveDisabled = !hasFormChanged();
 
+  // ✅ Updated handleChange with dynamic unit logic
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -160,6 +151,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     delete payload.available_quantity;
     delete payload.saleable_quantity;
     delete payload.imageUrl;
+
     const submissionFormData = new FormData();
     Object.entries(payload).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
@@ -172,7 +164,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
     try {
       const isEditing = !!productToEdit?.product_id;
-
       if (isEditing) {
         await api.put(
           `/api/admin/products/${productToEdit.product_id}`,
@@ -201,13 +192,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
 
+  // ✅ Determine available selling units dynamically
+  const availableSellingUnits =
+    UNIT_CONVERSION_MAP[formData.unit_type || ""] ||
+    (formData.unit_type ? [formData.unit_type] : []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#ffffffe8]">
       <div className="bg-[#f7f7f7] rounded-xl shadow-2xl w-full max-w-[700px] flex flex-col max-h-[90vh] overflow-hidden">
         <div className="relative flex-shrink-0 p-6 bg-[#387c40]">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 text-white  transition-colors"
+            className="absolute top-4 right-4 p-1.5 text-white transition-colors"
             aria-label="Close modal"
           >
             <HiX className="h-6 w-6 text-white hover:text-gray-200 transition-colors" />
@@ -230,6 +226,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         <div className="flex-grow overflow-y-auto">
           <form onSubmit={handleSubmit} className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              {/* Image Upload */}
               <div className="md:row-span-4">
                 <input
                   id="productImage"
@@ -293,6 +290,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 )}
               </div>
 
+              {/* Product Name */}
               <div>
                 <label htmlFor="product_name" className={labelStyle}>
                   Product Name
@@ -307,6 +305,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 />
               </div>
 
+              {/* Category */}
               <div>
                 <label htmlFor="product_category" className={labelStyle}>
                   Category
@@ -329,6 +328,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </select>
               </div>
 
+              {/* Cost Price Unit */}
               <div>
                 <label htmlFor="unit_type" className={labelStyle}>
                   Cost Price Unit
@@ -352,6 +352,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </select>
               </div>
 
+              {/* Cost Price */}
               <div>
                 <label htmlFor="cost_price" className={labelStyle}>
                   Cost Price
@@ -368,6 +369,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 />
               </div>
 
+              {/* Selling Price */}
               <div>
                 <label htmlFor="selling_price" className={labelStyle}>
                   Selling Price
@@ -384,6 +386,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 />
               </div>
 
+              {/* Selling Quantity */}
               <div>
                 <label htmlFor="sell_per_unit_qty" className={labelStyle}>
                   Selling Quantity Per Selling Unit
@@ -399,6 +402,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 />
               </div>
 
+              {/* ✅ Selling Unit Dropdown (Dynamic) */}
               <div>
                 <label htmlFor="selling_unit" className={labelStyle}>
                   Selling Unit
@@ -410,11 +414,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   onChange={handleChange}
                   className={inputStyle}
                   required
+                  disabled={!formData.unit_type}
                 >
                   <option value="" disabled>
-                    Select a Unit
+                    {formData.unit_type
+                      ? "Select a Selling Unit"
+                      : "Select Cost Unit First"}
                   </option>
-                  {sellingUnitOptions.map((option) => (
+                  {availableSellingUnits.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -422,6 +429,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </select>
               </div>
 
+              {/* Description */}
               <div>
                 <label htmlFor="product_description" className={labelStyle}>
                   Description (Optional)
@@ -438,6 +446,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
           </form>
         </div>
 
+        {/* Footer */}
         <div className="flex-shrink-0 flex flex-col p-6 border-t border-gray-200 bg-gray-50">
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button

@@ -1,4 +1,3 @@
-//ProductsPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type {

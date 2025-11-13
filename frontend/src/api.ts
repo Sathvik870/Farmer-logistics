@@ -12,7 +12,9 @@ api.interceptors.request.use(
 
     if (config.url?.includes("/api/admin")) {
       token = localStorage.getItem("adminAuthToken");
-    } else if (config.url?.includes("/api/customer")) {
+    }
+    
+    else if (config.url?.includes("/api/customer")) {
       token = localStorage.getItem("customerAuthToken");
     }
 

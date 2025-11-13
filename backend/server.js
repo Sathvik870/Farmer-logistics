@@ -40,7 +40,6 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://192.168.1.6:5173",
   "https://farmer-logistics.netlify.app",
-  "http://localhost:3000",
 ];
 
 app.use(
@@ -72,14 +71,16 @@ app.use("/api/admin", adminRouter);
 const customerRouter = express.Router();
 customerRouter.use("/auth", customerAuthRoutes);
 customerRouter.use("/users", customerUserRoutes);
-customerRouter.use("/orders", customerOrderRoutes);
+customerRouter.use("/orders", customerOrderRoutes); 
 
 app.use("/api/customer", customerRouter);
+
 
 const publicRouter = express.Router();
 publicRouter.use("/products", publicProductRoutes);
 
 app.use("/api/public", publicRouter);
+
 
 app.get("/", (req, res) => {
   res.send("Hello there! Welcome to the Farmer Logistics Backend Server.");

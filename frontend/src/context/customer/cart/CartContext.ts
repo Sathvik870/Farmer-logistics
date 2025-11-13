@@ -11,7 +11,7 @@ export type CartValidationMessages = {
 
 export interface CartContextType {
   cartItems: CartItem[];
-  cartCount: number;  
+  cartCount: number;
   totalPrice: number;
   addToCart: (product: ProductWithImage) => void;
   getItemQuantity: (productId: number) => number;
@@ -21,6 +21,10 @@ export interface CartContextType {
   clearCart: () => void;
   validationMessages: CartValidationMessages;
   validateCart: () => Promise<void>;
+  removeItem: (productId: number) => void;
+  isCartValidForCheckout: boolean;
 }
 
-export const CartContext = createContext<CartContextType | undefined>(undefined);
+export const CartContext = createContext<CartContextType | undefined>(
+  undefined
+);

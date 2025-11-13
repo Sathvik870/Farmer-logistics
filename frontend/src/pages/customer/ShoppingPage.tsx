@@ -12,20 +12,15 @@ const ShoppingPage: React.FC = () => {
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
   const filteredProducts = useMemo(() => {
-    // ✅ Move safe array logic inside useMemo
-    const safeProducts = Array.isArray(products) ? products : [];
-
-    return safeProducts.filter((product) => {
+    return products.filter((product) => {
       const categoryMatch =
         selectedCategory === "All" ||
         product.product_category === selectedCategory;
-
       const searchMatch =
         !debouncedSearchTerm ||
         product.product_name
           .toLowerCase()
           .includes(debouncedSearchTerm.toLowerCase());
-
       return categoryMatch && searchMatch;
     });
   }, [products, selectedCategory, debouncedSearchTerm]);
@@ -51,13 +46,5 @@ const ShoppingPage: React.FC = () => {
     </div>
   );
 };
-
-// <div>
-//       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-//         {products.map((product) => (
-//           <ProductCard key={product.product_id} product={product} />
-//         ))}
-//       </div>
-//     </div>
 
 export default ShoppingPage;

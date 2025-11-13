@@ -19,7 +19,7 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
   const isAtMaxStock = quantity >= product.saleable_quantity;
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [inputValue, setInputValue] = useState(String(quantity)); 
+  const [inputValue, setInputValue] = useState(String(quantity));
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
@@ -39,8 +39,8 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
 
     const sanitizedValue = value.replace(/[^0-9]/g, "");
 
-    if (sanitizedValue === '') {
-      setShowTooltip(false); 
+    if (sanitizedValue === "") {
+      setShowTooltip(false);
       return;
     }
 
@@ -131,41 +131,78 @@ const ProductCard: React.FC<{ product: ProductWithImage }> = ({ product }) => {
   const quantity = getItemQuantity(product.product_id);
 
   const [isStepperEditing, setIsStepperEditing] = useState(false);
-  const showAddButton = quantity === 0 && !isStepperEditing;
+  const isOutOfStock = product.saleable_quantity <= 0;
+  const showAddButton = !isOutOfStock && quantity === 0 && !isStepperEditing;
+  const showStepper = !isOutOfStock && (quantity > 0 || isStepperEditing);
   return (
-    <div className="group bg-white border border-gray-200 rounded-lg shadow-sm p-3 flex flex-col justify-between hover:shadow-lg transition-shadow h-75">
+    <div
+      className={`group bg-white border rounded-lg shadow-sm p-3 flex flex-col justify-between transition-shadow h-72
+      ${isOutOfStock ? "border-gray-200" : "hover:shadow-lg border-gray-200"}`}
+    >
       <div>
         <div className="relative w-full h-36 mb-3 overflow-hidden rounded-md">
           <img
             src={product.imageUrl || "https://via.placeholder.com/200"}
             alt={product.product_name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className={`w-full h-full object-cover transition-transform duration-300 ${
+              !isOutOfStock && "group-hover:scale-105"
+            } ${isOutOfStock && "filter grayscale"}`}
           />
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-[#00000065] flex items-center justify-center rounded-md">
+              <span className="text-white font-bold text-xs bg-gray-800 bg-opacity-70 px-3 py-1 rounded-full">
+                OUT OF STOCK
+              </span>
+            </div>
+          )}
         </div>
 
-        <h3 className="font-semibold text-gray-800 text-sm leading-tight mb-1 h-10">
+        <h3
+          className={`font-semibold text-sm leading-tight mb-1 h-10 ${
+            isOutOfStock ? "text-gray-400" : "text-gray-800"
+          }`}
+        >
           {product.product_name}
         </h3>
-        <p className="text-medium text-gray-500">
+        <p
+          className={`text-sm ${
+            isOutOfStock ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           {product.sell_per_unit_qty} {product.selling_unit}
         </p>
       </div>
       <div className="flex items-center justify-between mt-2">
-        <span className="font-bold text-gray-900">
+        <span
+          className={`font-bold ${
+            isOutOfStock ? "text-gray-400" : "text-gray-900"
+          }`}
+        >
           ₹{product.selling_price}
         </span>
-        {showAddButton ? (
+        {showAddButton && (
           <button
             onClick={() => addToCart(product)}
             className="border-2 border-[#387c40] text-green-700 font-bold px-6 py-1.5 rounded-lg hover:bg-[#387c40] hover:text-white transition-all duration-300"
           >
             ADD
           </button>
-        ) : (
+        )}
+
+        {showStepper && (
           <QuantityStepper
             product={product}
             onEditingChange={setIsStepperEditing}
           />
+        )}
+
+        {isOutOfStock && (
+          <button
+            disabled
+            className="border-2 border-gray-300 text-gray-400 font-bold px-6 py-1.5 rounded-lg cursor-not-allowed"
+          >
+            ADD
+          </button>
         )}
       </div>
     </div>

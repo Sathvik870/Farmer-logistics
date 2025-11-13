@@ -12,15 +12,20 @@ const ShoppingPage: React.FC = () => {
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    // ✅ Move safe array logic inside useMemo
+    const safeProducts = Array.isArray(products) ? products : [];
+
+    return safeProducts.filter((product) => {
       const categoryMatch =
         selectedCategory === "All" ||
         product.product_category === selectedCategory;
+
       const searchMatch =
         !debouncedSearchTerm ||
         product.product_name
           .toLowerCase()
           .includes(debouncedSearchTerm.toLowerCase());
+
       return categoryMatch && searchMatch;
     });
   }, [products, selectedCategory, debouncedSearchTerm]);

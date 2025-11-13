@@ -1,4 +1,3 @@
-// ProductModal.tsx
 import { useAlert } from "../../context/common/AlertContext";
 import api from "../../api";
 import React, { useState, useEffect } from "react";
@@ -27,18 +26,17 @@ const unitOptions = [
   "bunch",
 ];
 
-// Map of allowed selling units for each cost price unit
-const UNIT_CONVERSION_MAP: Record<string, string[]> = {
+const unitConverionMap: Record<string, string[]> = {
   kg: ["kg", "gm"],
   gm: ["gm", "kg"],
   ltr: ["ltr", "ml"],
   ml: ["ml", "ltr"],
   piece: ["piece", "dozen"],
   dozen: ["dozen", "piece"],
-  packet: ["packet", "box"],
-  box: ["box", "packet"],
-  bottle: ["bottle", "can"],
-  can: ["can", "bottle"],
+  packet: ["packet"],
+  box: ["box"],
+  bottle: ["bottle"],
+  can: ["can"],
   bunch: ["bunch"],
 };
 
@@ -127,7 +125,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     const isNumberField = (e.target as HTMLInputElement).type === "number";
 
     if (name === "unit_type") {
-      const allowedUnits = UNIT_CONVERSION_MAP[value] || [value];
+      const allowedUnits = unitConverionMap[value] || [value];
       setFormData((prev) => ({
         ...prev,
         unit_type: value,
@@ -194,7 +192,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   // ✅ Determine available selling units dynamically
   const availableSellingUnits =
-    UNIT_CONVERSION_MAP[formData.unit_type || ""] ||
+    unitConverionMap[formData.unit_type || ""] ||
     (formData.unit_type ? [formData.unit_type] : []);
 
   return (

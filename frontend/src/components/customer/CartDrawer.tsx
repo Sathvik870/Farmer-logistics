@@ -7,6 +7,7 @@ import {
   HiOutlineReceiptTax,
   HiChevronLeft,
   HiOutlineShoppingCart,
+  HiOutlineRefresh,
 } from "react-icons/hi";
 import CartItemCard from "./CartItemCard";
 import DeliveryLocation from "./DeliveryLocation";
@@ -20,14 +21,17 @@ interface CartDrawerProps {
 }
 
 const BillSummary: React.FC = () => {
-  const { cartItems } = useCart();
-  const itemTotal = cartItems.reduce(
+  const { cartItems, validationMessages } = useCart();
+  const validCartItems = cartItems.filter(
+    (item) => !validationMessages[item.product_id]
+  );
+  const itemTotal = validCartItems.reduce(
     (total, item) => total + item.selling_price * item.quantity,
     0
   );
+
   const deliveryFee = 50.0;
   const toPay = itemTotal + deliveryFee;
-
   return (
     <div className="p-4 bg-white rounded-lg  border border-gray-200">
       <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
@@ -59,6 +63,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     clearCart,
     validateCart,
     isCartValidForCheckout,
+    isValidating,
   } = useCart();
   const { customer } = useCustomerAuth();
   console.log("Customer Details in CartDrawer:", customer);
@@ -67,7 +72,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const { fetchProducts } = useProducts();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const isProceedDisabled = !location;
+  const isProceedDisabled = !location || !isCartValidForCheckout;
   const locationButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -206,7 +211,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                     </button>
                   </div>
                 )}
-                {cartItems.length > 0 ? (
+                {isValidating ? (
+                  <div className="flex flex-col items-center justify-center pt-20 text-gray-500">
+                    <HiOutlineRefresh className="animate-spin h-8 w-8 mb-2" />
+                    <p>Validating your cart...</p>
+                  </div>
+                ) : cartItems.length > 0 ? (
                   <div className="bg-white rounded-lg divide-y divide-gray-200 px-4">
                     {cartItems.map((item) => (
                       <CartItemCard key={item.product_id} item={item} />
@@ -218,7 +228,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
               </div>
-              {cartItems.length > 0 && (
+              {cartItems.length > 0 && !isValidating && (
                 <footer className="flex-shrink-0 p-4 space-y-4 border-t border-gray-200 bg-white">
                   <BillSummary />
                   <button
@@ -228,10 +238,10 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   >
                     {isPlacingOrder
                       ? "Placing Order..."
-                      : isProceedDisabled
+                      : !location
                       ? "Select Address to Proceed"
                       : !isCartValidForCheckout
-                      ? "Please resolve stock issues"
+                      ? "Please Resolve Stock Issues"
                       : "Place Order"}
                   </button>
                 </footer>

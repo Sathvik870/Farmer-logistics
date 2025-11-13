@@ -23,6 +23,7 @@ export interface CartContextType {
   validateCart: () => Promise<void>;
   removeItem: (productId: number) => void;
   isCartValidForCheckout: boolean;
+  isValidating: boolean;
 }
 
 export const CartContext = createContext<CartContextType | undefined>(

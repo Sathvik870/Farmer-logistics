@@ -20,9 +20,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const { products, fetchProducts } = useProducts();
-  const [validationMessages, setValidationMessages] =
-    useState<CartValidationMessages>({});
-  const [isValidationPending, setIsValidationPending] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
     try {
@@ -32,15 +30,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cartItems]);
 
-  useEffect(() => {
-    if (!isValidationPending || cartItems.length === 0) {
-      if (isValidationPending) setIsValidationPending(false);
-      return;
+  const validationMessages = useMemo<CartValidationMessages>(() => {
+    const newMessages: CartValidationMessages = {};
+    if (products.length === 0 && cartItems.length > 0) {
+      return {};
     }
 
-    const newMessages: CartValidationMessages = {};
-
-    const updatedCartItems = cartItems.map((cartItem) => {
+    cartItems.forEach((cartItem) => {
       const liveProduct = products.find(
         (p) => p.product_id === cartItem.product_id
       );
@@ -50,33 +46,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       } else if (cartItem.quantity > liveProduct.saleable_quantity) {
         newMessages[
           cartItem.product_id
-        ] = `Only ${liveProduct.saleable_quantity} available. Please reduce quantity.`;
+        ] = `Only ${liveProduct.saleable_quantity} available`;
       }
-      return {
-        ...cartItem,
-        saleable_quantity: liveProduct?.saleable_quantity || 0,
-      };
     });
 
-    setValidationMessages(newMessages);
-    setCartItems(updatedCartItems);
-    setIsValidationPending(false);
-  }, [products, isValidationPending, cartItems]);
+    return newMessages;
+  }, [cartItems, products]);
+
+  const isCartValidForCheckout = useMemo(() => {
+    return Object.keys(validationMessages).length === 0;
+  }, [validationMessages]);
 
   const validateCart = async () => {
-    setIsValidationPending(true);
+    setIsValidating(true);
     await fetchProducts();
+    setIsValidating(false);
   };
 
   const removeItem = (productId: number) => {
     setCartItems((prevItems) =>
       prevItems.filter((item) => item.product_id !== productId)
     );
-    setValidationMessages((prev) => {
-      const newMessages = { ...prev };
-      delete newMessages[productId];
-      return newMessages;
-    });
   };
 
   const addToCart = (product: ProductWithImage) => {
@@ -98,7 +88,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => {
     setCartItems([]);
-    setValidationMessages({});
     localStorage.removeItem(CART_STORAGE_KEY);
   };
 
@@ -156,9 +145,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const isCartValidForCheckout = useMemo(() => {
-    return Object.keys(validationMessages).length === 0;
-  }, [validationMessages]);
   const getItemQuantity = (productId: number): number => {
     const item = cartItems.find((item) => item.product_id === productId);
     return item ? item.quantity : 0;
@@ -187,6 +173,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         validateCart,
         removeItem,
         isCartValidForCheckout,
+        isValidating,
       }}
     >
       {children}

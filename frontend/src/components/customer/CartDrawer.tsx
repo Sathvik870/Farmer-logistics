@@ -1,3 +1,4 @@
+//CartDrawer.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "../../context/customer/location/useLocation";
 import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth";
@@ -86,7 +87,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
           responseType: "blob",
         }
       );
-      console.log(customer)
+      console.log(customer);
       if (response.headers["content-type"] === "application/pdf") {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
@@ -198,7 +199,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   </div>
                 ) : (
                   <div className="text-center pt-20 text-gray-500">
-                    Your cart is empty.
+                    Some products may be temporarily out of stock or
+                    unavailable.
                   </div>
                 )}
               </div>

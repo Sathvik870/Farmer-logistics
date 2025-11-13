@@ -38,6 +38,28 @@ export interface ProductWithImage extends Product {
   imageUrl?: string | null;
 }
 
+const gridStyles = `
+  .custom-ag-theme .ag-header {
+    background-color: #387c40;
+    border-bottom: 2px solid #387c40;
+  }
+
+  .custom-ag-theme .ag-header-cell {
+    color: white;
+  }
+
+  .custom-ag-theme .ag-header-cell-label {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .custom-ag-theme .ag-header-icon {
+    color: white;
+  }
+  .custom-ag-theme .ag-header-icon {
+    color: white;
+  }
+`;
+
 const ProductsPage: React.FC = () => {
   const [rowData, setRowData] = useState<Product[]>([]);
   const { showAlert } = useAlert();
@@ -308,6 +330,7 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div>
+      <style>{gridStyles}</style>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Products</h1>
         <div className="flex items-center gap-4">

@@ -19,6 +19,30 @@ import {
   HiOutlineSwitchHorizontal,
 } from "react-icons/hi";
 
+const gridStyles = `
+  .custom-ag-theme .ag-header {
+    background-color: #144a31;
+    border-bottom: 2px solid #387c40;
+  }
+
+  .custom-ag-theme .ag-header-cell {
+    color: white;
+  }
+
+  .custom-ag-theme .ag-header-cell-label {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .custom-ag-theme .ag-header-icon {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .custom-ag-theme .ag-header-cell:hover .ag-header-icon {
+    color: white;
+  }
+`;
+
 export interface Product {
   product_id: number;
   product_code: string;
@@ -308,6 +332,7 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div>
+      <style>{gridStyles}</style> {/* <--- ADD THIS LINE */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Products</h1>
         <div className="flex items-center gap-4">
@@ -360,7 +385,6 @@ const ProductsPage: React.FC = () => {
           </button>
         </div>
       </div>
-
       <div
         className="ag-theme-alpine custom-ag-theme"
         style={{ height: 600, width: "100%" }}

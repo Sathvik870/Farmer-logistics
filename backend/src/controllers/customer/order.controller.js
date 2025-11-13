@@ -1,8 +1,7 @@
 const db = require("../../config/db");
 const logger = require("../../config/logger");
 const { convertToBaseUnit } = require("../../utils/customer/unitConverter");
-const puppeteer = require("puppeteer");
-const { getInvoiceHTML } = require("../../utils/common/invoiceTemplate");
+const { createInvoicePDF } = require("../../utils/common/invoiceGenerator");
 const numberToWords = require("number-to-words");
 
 exports.placeOrder = async (req, res) => {
@@ -51,9 +50,10 @@ exports.placeOrder = async (req, res) => {
 
       const price = parseFloat(item.selling_price);
       const quantity = parseFloat(item.quantity);
-      if (isNaN(price) || isNaN(quantity)) throw new Error(`Invalid price/quantity for ${item.product_name}`);
+      if (isNaN(price) || isNaN(quantity))
+        throw new Error(`Invalid price/quantity for ${item.product_name}`);
       subtotal += quantity * price;
-      
+
       const deductionAmount = convertToBaseUnit(
         item.quantity,
         item.selling_unit,
@@ -67,7 +67,7 @@ exports.placeOrder = async (req, res) => {
       `;
       await client.query(orderItemQuery, [
         sales_order_id,
-        item.product_id,  
+        item.product_id,
         item.quantity,
         item.selling_price,
       ]);
@@ -105,7 +105,7 @@ exports.placeOrder = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING invoice_id, invoice_code, invoice_date;
     `;
-    
+
     console.log("customer_details.address:", customer_details.address);
 
     const invoiceResult = await client.query(invoiceInsertQuery, [
@@ -152,25 +152,15 @@ exports.placeOrder = async (req, res) => {
     logger.info(
       `[PDF] Generating invoice PDF for invoice code: ${newInvoice.invoice_code}`
     );
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    const htmlContent = getInvoiceHTML(invoiceData);
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
-    });
-    await browser.close();
+
+    logger.info(`[PDF] Successfully generated PDF buffer.`);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=invoice-${newInvoice.invoice_code}.pdf`
     );
-    return res.status(201).send(pdfBuffer);
+    createInvoicePDF(invoiceData, res);
   } catch (error) {
     console.error("Error placing order:", error);
     await client.query("ROLLBACK");

@@ -26,8 +26,8 @@
     "number-to-words": "^1.2.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pdfkit": "^0.17.2",
     "pg": "^8.16.3",
-    "puppeteer": "^24.29.1",
     "serverless-http": "^4.0.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"

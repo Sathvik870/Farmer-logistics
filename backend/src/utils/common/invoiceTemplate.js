@@ -7,7 +7,8 @@ const formatDate = (date) => {
 };
 
 exports.getInvoiceHTML = (orderData) => {
-  const { order, customer, items, total, totalInWords , deliveryCharges} = orderData;
+  const { order, customer, items, total, totalInWords, deliveryCharges } =
+    orderData;
 
   let itemsHtml = "";
   items.forEach((item, index) => {
@@ -97,12 +98,16 @@ exports.getInvoiceHTML = (orderData) => {
                     <tr><td>Sub Total</td><td style="text-align: right;">${total.toFixed(
                       2
                     )}</td></tr>
-                    <tr class="total"><td>Delivery Charges</td><td style="text-align: right;">₹${deliveryCharges.toFixed(
-                      2
-                    )}</td></tr>
-                    <tr class="total"><td>Total</td><td style="text-align: right;">₹${(total + deliveryCharges).toFixed(
-                      2
-                    )}</td></tr>
+                    <tr class="total">
+                        <td>Delivery Charges</td>
+                        <td style="text-align: right;">₹${deliveryCharges.toFixed(2)}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Total</td>
+                        <td style="text-align: right;">₹${orderData.total.toFixed(
+                          2
+                        )}</td>
+                    </tr>
                 </table>
             </div>
 

@@ -53,7 +53,13 @@ const BillSummary: React.FC = () => {
 };
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const { cartItems, cartCount, clearCart, validateCart } = useCart();
+  const {
+    cartItems,
+    cartCount,
+    clearCart,
+    validateCart,
+    isCartValidForCheckout,
+  } = useCart();
   const { customer } = useCustomerAuth();
   console.log("Customer Details in CartDrawer:", customer);
   const { location } = useLocation();
@@ -86,7 +92,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
           responseType: "blob",
         }
       );
-      console.log(customer)
+      console.log(customer);
       if (response.headers["content-type"] === "application/pdf") {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
@@ -190,6 +196,16 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                     onClose={() => setIsLocationPickerOpen(false)}
                   />
                 </div>
+                {cartItems.length > 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={clearCart}
+                      className="text-sm font-semibold text-red-600 hover:text-red-800"
+                    >
+                      Clear Cart
+                    </button>
+                  </div>
+                )}
                 {cartItems.length > 0 ? (
                   <div className="bg-white rounded-lg divide-y divide-gray-200 px-4">
                     {cartItems.map((item) => (
@@ -214,6 +230,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                       ? "Placing Order..."
                       : isProceedDisabled
                       ? "Select Address to Proceed"
+                      : !isCartValidForCheckout
+                      ? "Please resolve stock issues"
                       : "Place Order"}
                   </button>
                 </footer>

@@ -13,18 +13,18 @@ exports.getSaleableProducts = async (req, res) => {
         p.product_id, p.product_code, p.product_name, p.product_category,
         p.product_description, p.unit_type, p.cost_price, p.selling_price,
         p.sell_per_unit_qty, p.selling_unit, p.product_image,
-        s.saleable_quantity
+        -- Use COALESCE to ensure we always get a number, even if no stock record exists
+        COALESCE(s.saleable_quantity, 0) as saleable_quantity 
       FROM 
         products p
-      JOIN 
+      LEFT JOIN -- Use LEFT JOIN to include products that might not have a stock entry yet
         stocks s ON p.product_id = s.product_id
-      WHERE 
-        s.saleable_quantity > 0
     `;
-
-    const queryParams = [];
     
+    const queryParams = [];
     let paramIndex = 1;
+
+    query += ` WHERE 1=1`;
 
     if (category && category.toLowerCase() !== 'all') {
       query += ` AND p.product_category = $${paramIndex++}`;
@@ -37,7 +37,7 @@ exports.getSaleableProducts = async (req, res) => {
     }
 
     query += ` ORDER BY p.product_name ASC;`;
-    
+
     const { rows } = await db.query(query, queryParams);
 
     const productsWithImages = rows.map(product => {

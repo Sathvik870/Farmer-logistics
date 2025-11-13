@@ -1,8 +1,12 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode, useMemo } from "react";
 import { useProducts } from "../product/useProducts";
-import { CartContext, type CartItem ,type CartValidationMessages } from "./CartContext.ts";
+import {
+  CartContext,
+  type CartItem,
+  type CartValidationMessages,
+} from "./CartContext.ts";
 import type { ProductWithImage } from "../../../pages/admin/ProductsPage.tsx";
-const CART_STORAGE_KEY = 'farmerLogisticsCart';
+const CART_STORAGE_KEY = "farmerLogisticsCart";
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -16,7 +20,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const { products, fetchProducts } = useProducts();
-  const [validationMessages, setValidationMessages] = useState<CartValidationMessages>({});
+  const [validationMessages, setValidationMessages] =
+    useState<CartValidationMessages>({});
+  const [isValidationPending, setIsValidationPending] = useState(false);
 
   useEffect(() => {
     try {
@@ -26,25 +32,51 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cartItems]);
 
-  const validateCart = async () => {
-    await fetchProducts();
+  useEffect(() => {
+    if (!isValidationPending || cartItems.length === 0) {
+      if (isValidationPending) setIsValidationPending(false);
+      return;
+    }
+
     const newMessages: CartValidationMessages = {};
-    const updatedCartItems = cartItems.map(cartItem => {
-      const liveProduct = products.find(p => p.product_id === cartItem.product_id);
-      let updatedQuantity = cartItem.quantity;
-      
+
+    const updatedCartItems = cartItems.map((cartItem) => {
+      const liveProduct = products.find(
+        (p) => p.product_id === cartItem.product_id
+      );
+
       if (!liveProduct || liveProduct.saleable_quantity <= 0) {
         newMessages[cartItem.product_id] = "Out of Stock";
-        updatedQuantity = 0;
       } else if (cartItem.quantity > liveProduct.saleable_quantity) {
-        newMessages[cartItem.product_id] = `Only ${liveProduct.saleable_quantity} available`;
+        newMessages[
+          cartItem.product_id
+        ] = `Only ${liveProduct.saleable_quantity} available. Please reduce quantity.`;
       }
-
-      return { ...cartItem, quantity: updatedQuantity };
+      return {
+        ...cartItem,
+        saleable_quantity: liveProduct?.saleable_quantity || 0,
+      };
     });
 
     setValidationMessages(newMessages);
-    setCartItems(updatedCartItems.filter(item => item.quantity > 0));
+    setCartItems(updatedCartItems);
+    setIsValidationPending(false);
+  }, [products, isValidationPending, cartItems]);
+
+  const validateCart = async () => {
+    setIsValidationPending(true);
+    await fetchProducts();
+  };
+
+  const removeItem = (productId: number) => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.product_id !== productId)
+    );
+    setValidationMessages((prev) => {
+      const newMessages = { ...prev };
+      delete newMessages[productId];
+      return newMessages;
+    });
   };
 
   const addToCart = (product: ProductWithImage) => {
@@ -67,11 +99,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = () => {
     setCartItems([]);
     setValidationMessages({});
-    localStorage.removeItem(CART_STORAGE_KEY); 
+    localStorage.removeItem(CART_STORAGE_KEY);
   };
 
   const incrementItem = (productId: number) => {
-    setCartItems((prevItems) => 
+    setCartItems((prevItems) =>
       prevItems.map((item) => {
         if (item.product_id === productId) {
           if (item.quantity < item.saleable_quantity) {
@@ -85,19 +117,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const decrementItem = (productId: number) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find(item => item.product_id === productId);
+      const existingItem = prevItems.find(
+        (item) => item.product_id === productId
+      );
       if (existingItem && existingItem.quantity === 1) {
         return prevItems.filter((item) => item.product_id !== productId);
       }
       return prevItems.map((item) =>
-        item.product_id === productId ? { ...item, quantity: item.quantity - 1 } : item
+        item.product_id === productId
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
       );
     });
   };
 
   const setItemQuantity = (productId: number, quantity: number) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find(item => item.product_id === productId);
+      const existingItem = prevItems.find(
+        (item) => item.product_id === productId
+      );
       if (!existingItem) return prevItems;
 
       let newQuantity = quantity;
@@ -105,17 +143,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (newQuantity > existingItem.saleable_quantity) {
         newQuantity = existingItem.saleable_quantity;
       }
-      
+
       if (newQuantity === 0) {
-        return prevItems.filter(item => item.product_id !== productId);
+        return prevItems.filter((item) => item.product_id !== productId);
       }
 
       return prevItems.map((item) =>
-        item.product_id === productId ? { ...item, quantity: newQuantity } : item
+        item.product_id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
       );
     });
   };
 
+  const isCartValidForCheckout = useMemo(() => {
+    return Object.keys(validationMessages).length === 0;
+  }, [validationMessages]);
   const getItemQuantity = (productId: number): number => {
     const item = cartItems.find((item) => item.product_id === productId);
     return item ? item.quantity : 0;
@@ -142,6 +185,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         validationMessages,
         validateCart,
+        removeItem,
+        isCartValidForCheckout,
       }}
     >
       {children}

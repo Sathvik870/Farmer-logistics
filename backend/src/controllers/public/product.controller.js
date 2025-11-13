@@ -2,10 +2,13 @@ const db = require("../../config/db");
 const logger = require("../../config/logger");
 
 exports.getSaleableProducts = async (req, res) => {
-
   const { category, search } = req.query;
 
-  logger.info(`[PUBLIC_PRODUCT] Fetching products. Category: ${category || 'All'}, Search: '${search || ''}'`);
+  logger.info(
+    `[PUBLIC_PRODUCT] Fetching products. Category: ${
+      category || "All"
+    }, Search: '${search || ""}'`
+  );
 
   try {
     let query = `
@@ -23,10 +26,10 @@ exports.getSaleableProducts = async (req, res) => {
     `;
 
     const queryParams = [];
-    
+
     let paramIndex = 1;
 
-    if (category && category.toLowerCase() !== 'all') {
+    if (category && category.toLowerCase() !== "all") {
       query += ` AND p.product_category = $${paramIndex++}`;
       queryParams.push(category);
     }
@@ -37,13 +40,15 @@ exports.getSaleableProducts = async (req, res) => {
     }
 
     query += ` ORDER BY p.product_name ASC;`;
-    
+
     const { rows } = await db.query(query, queryParams);
 
-    const productsWithImages = rows.map(product => {
+    const productsWithImages = rows.map((product) => {
       let imageUrl = null;
       if (product.product_image) {
-        imageUrl = `data:image/jpeg;base64,${product.product_image.toString("base64")}`;
+        imageUrl = `data:image/jpeg;base64,${product.product_image.toString(
+          "base64"
+        )}`;
       }
       const { product_image, ...productData } = product;
       return { ...productData, imageUrl };
@@ -51,7 +56,10 @@ exports.getSaleableProducts = async (req, res) => {
 
     res.status(200).json(productsWithImages);
   } catch (error) {
-    logger.error(`[PUBLIC_PRODUCT] Error fetching saleable products: ${error.message}`);
+    logger.error(
+      `[PUBLIC_PRODUCT] Error fetching saleable products: ${error.message}`
+    );
+    console.error(error); // add this line
     res.status(500).json({ message: "Internal server error" });
   }
 };

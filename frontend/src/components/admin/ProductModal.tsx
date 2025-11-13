@@ -1,3 +1,4 @@
+//ProductModal.tsx
 import { useAlert } from "../../context/common/AlertContext";
 import api from "../../api";
 import React, { useState, useEffect } from "react";
@@ -26,10 +27,27 @@ const unitOptions = [
   "bunch",
 ];
 
+const UNIT_CONVERSION_MAP: Record<string, string[]> = {
+  kg: ["kg", "gm"],
+  gm: ["gm", "kg"],
+  ltr: ["ltr", "ml"],
+  ml: ["ml", "ltr"],
+  piece: ["piece", "dozen"],
+  dozen: ["dozen", "piece"],
+  packet: ["packet", "box"],
+  box: ["box", "packet"],
+  bottle: ["bottle", "can"],
+  can: ["can", "bottle"],
+  bunch: ["bunch"],
+};
+
 const labelStyle = "block text-base text-black mb-1 text-left";
-const inputStyle = "w-full text-base bg-transparent border-b-2 placeholder-gray-500 border-gray-300 py-2 px-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-300 ease-in-out";
-const primaryButtonStyle = "flex gap-3 text-base cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center";
-const secondaryButtonStyle = "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
+const inputStyle =
+  "w-full text-base bg-transparent border-b-2 placeholder-gray-500 border-gray-300 py-2 px-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-300 ease-in-out";
+const primaryButtonStyle =
+  "flex gap-3 text-base cursor-pointer text-white font-semibold bg-gradient-to-r from-[#144a31] to-[#387c40] px-7 py-3 rounded-full border border-[#144a31] hover:scale-105 duration-200 justify-center items-center";
+const secondaryButtonStyle =
+  "flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200";
 
 const sellingUnitOptions = [
   "gm",
@@ -51,7 +69,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   onSaveSuccess,
   productToEdit,
 }) => {
-    const [initialData, setInitialData] = useState<Partial<Product>>({});
+  const [initialData, setInitialData] = useState<Partial<Product>>({});
   const [formData, setFormData] = useState<Partial<Product>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -96,9 +114,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
   const hasFormChanged = () => {
-    if (selectedFile) return true; 
+    if (selectedFile) return true;
     for (const key in initialData) {
-      if (initialData[key as keyof Product] !== formData[key as keyof Product]) {
+      if (
+        initialData[key as keyof Product] !== formData[key as keyof Product]
+      ) {
         return true;
       }
     }
@@ -114,10 +134,22 @@ const ProductModal: React.FC<ProductModalProps> = ({
   ) => {
     const { name, value } = e.target;
     const isNumberField = (e.target as HTMLInputElement).type === "number";
-    setFormData((prev) => ({
-      ...prev,
-      [name]: isNumberField ? parseFloat(value) : value,
-    }));
+
+    if (name === "unit_type") {
+      const allowedUnits = UNIT_CONVERSION_MAP[value] || [value];
+      setFormData((prev) => ({
+        ...prev,
+        unit_type: value,
+        selling_unit: allowedUnits.includes(prev.selling_unit || "")
+          ? prev.selling_unit
+          : allowedUnits[0], // default compatible unit
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: isNumberField ? parseFloat(value) : value,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -286,7 +318,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   onChange={handleChange}
                   className={inputStyle}
                 >
-                  <option value="" disabled>Select a Category</option>
+                  <option value="" disabled>
+                    Select a Category
+                  </option>
                   {categoryOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -307,7 +341,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   className={inputStyle}
                   required
                 >
-                  <option value="" disabled>Select a Unit</option>
+                  <option value="" disabled>
+                    Select a Unit
+                  </option>
                   {unitOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -375,7 +411,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   className={inputStyle}
                   required
                 >
-                  <option value="" disabled>Select a Unit</option>
+                  <option value="" disabled>
+                    Select a Unit
+                  </option>
                   {sellingUnitOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}

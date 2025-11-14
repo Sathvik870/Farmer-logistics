@@ -3,6 +3,7 @@ import { useCart } from "../../context/customer/cart/useCart";
 import type { CartItem } from "../../context/customer/cart/CartContext";
 import { HiPlus, HiMinus, HiExclamation } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
+import { calculateMaxCartableQuantity } from '../../utils/unitConverter';
 
 interface CartQuantityStepperProps {
   item: CartItem;
@@ -12,7 +13,13 @@ const CartQuantityStepper: React.FC<CartQuantityStepperProps> = ({ item }) => {
   const { getItemQuantity, incrementItem, decrementItem, setItemQuantity } =
     useCart();
   const quantity = getItemQuantity(item.product_id);
-  const isAtMaxStock = quantity >= item.saleable_quantity;
+  const maxCartableQuantity = calculateMaxCartableQuantity(
+    item.saleable_quantity,
+    item.unit_type,
+    item.sell_per_unit_qty!,
+    item.selling_unit!
+  );
+  const isAtMaxStock = quantity >= maxCartableQuantity;
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(String(quantity));
   const [showTooltip, setShowTooltip] = useState(false);
@@ -39,7 +46,7 @@ const CartQuantityStepper: React.FC<CartQuantityStepperProps> = ({ item }) => {
     }
 
     const numericValue = parseInt(sanitizedValue, 10);
-    if (numericValue > item.saleable_quantity) {
+    if (numericValue > maxCartableQuantity) {
       setShowTooltip(true);
       setTimeout(() => setShowTooltip(false), 2000);
     } else {
@@ -53,8 +60,8 @@ const CartQuantityStepper: React.FC<CartQuantityStepperProps> = ({ item }) => {
     if (isNaN(finalQuantity)) {
       finalQuantity = 0;
     }
-    if (finalQuantity > item.saleable_quantity) {
-      finalQuantity = item.saleable_quantity;
+    if (finalQuantity > maxCartableQuantity) {
+      finalQuantity = maxCartableQuantity;
     }
     setItemQuantity(item.product_id, finalQuantity);
   };
@@ -112,7 +119,7 @@ const CartQuantityStepper: React.FC<CartQuantityStepperProps> = ({ item }) => {
             exit={{ opacity: 0, y: 5 }}
           >
             <HiExclamation className="text-yellow-400" />
-            Max: {item.saleable_quantity}
+            Max: {maxCartableQuantity}
           </motion.div>
         )}
       </AnimatePresence>

@@ -37,12 +37,10 @@ exports.signup = async (req, res) => {
     !username ||
     !gender
   ) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "First name, last name, username, email, password, and gender are required.",
-      });
+    return res.status(400).json({
+      message:
+        "First name, last name, username, email, password, and gender are required.",
+    });
   }
 
   try {
@@ -54,11 +52,9 @@ exports.signup = async (req, res) => {
       logger.warn(
         `[CUSTOMER_AUTH] Signup failed: Email or username already exists for ${email}`
       );
-      return res
-        .status(409)
-        .json({
-          message: "A user with this email or username already exists.",
-        });
+      return res.status(409).json({
+        message: "A user with this email or username already exists.",
+      });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -86,10 +82,28 @@ exports.signup = async (req, res) => {
     logger.info(
       `[CUSTOMER_AUTH] Customer successfully created: ${email} with code ${rows[0].customer_code}`
     );
+
     const newCustomer = rows[0];
 
+    if (newCustomer.is_google_auth === true) {
+      logger.warn(
+        `[CUSTOMER_AUTH] Login failed: Google account tried password login: ${identifier}`
+      );
+      return res.status(403).json({
+        message:
+          "This account uses Google Sign-In. Please log in using Google.",
+      });
+    } else if (newCustomer.is_guest_user === true) {
+      logger.warn(
+        `[CUSTOMER_AUTH] Login failed: Guest account tried password login: ${identifier}`
+      );
+      return res.status(403).json({
+        message:
+          "This account is a guest account. Please sign up for a full account to log in.",
+      });
+    }
     const token = jwt.sign(
-      { 
+      {
         customer_id: newCustomer.customer_id,
         customer_code: newCustomer.customer_code,
         role: "customer",
@@ -121,10 +135,15 @@ exports.login = async (req, res) => {
 
   try {
     const query = `
-      SELECT customer_id, customer_code, first_name, last_name, email, phone_number, password, username, gender
-      FROM customers
-      WHERE email = $1 OR phone_number = $1 OR customer_code = $1 OR username = $1 AND is_google_auth = FALSE;
-    `;
+  SELECT customer_id, customer_code, first_name, last_name, email, phone_number, password, username, gender
+  FROM customers
+  WHERE (email = $1 
+      OR phone_number = $1 
+      OR customer_code = $1 
+      OR username = $1)
+    AND is_google_auth = FALSE;
+`;
+
     const { rows } = await db.query(query, [identifier]);
 
     if (rows.length === 0) {
@@ -272,7 +291,7 @@ exports.googleAuthSignupOrLogin = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { 
+      {
         customer_id: userToReturn.customer_id,
         customer_code: userToReturn.customer_code,
         role: "customer",
@@ -345,13 +364,12 @@ exports.googleAuthLoginOnly = async (req, res) => {
       console.log("Existing non-Google user tried Google login:", email);
       return res.status(403).json({
         success: false,
-        message:
-          "Please sign in using your normal login method.",
+        message: "Please sign in using your normal login method.",
       });
     }
 
     const token = jwt.sign(
-      { 
+      {
         customer_id: userRecord.customer_id,
         customer_code: userRecord.customer_code,
         role: "customer",
@@ -397,18 +415,25 @@ exports.guestLogin = async (req, res) => {
       const existingUser = rows[0];
 
       if (existingUser.is_guest_user) {
-        logger.info(`[GUEST_AUTH] Existing guest user found for phone: ${phone_number}`);
+        logger.info(
+          `[GUEST_AUTH] Existing guest user found for phone: ${phone_number}`
+        );
         customer = existingUser;
       } else {
-        logger.warn(`[GUEST_AUTH] Phone number ${phone_number} belongs to a registered user. Guest login denied.`);
+        logger.warn(
+          `[GUEST_AUTH] Phone number ${phone_number} belongs to a registered user. Guest login denied.`
+        );
         return res.status(409).json({
-          message: "This phone number is already registered. Please log in using your password or Google account.",
+          message:
+            "This phone number is already registered. Please log in using your password or Google account.",
           isRegisteredUser: true,
         });
       }
     } else {
-      logger.info(`[GUEST_AUTH] No user found. Creating new guest account for phone: ${phone_number}`);
-      
+      logger.info(
+        `[GUEST_AUTH] No user found. Creating new guest account for phone: ${phone_number}`
+      );
+
       const newGuestQuery = `
         INSERT INTO customers (phone_number, first_name, last_name, email, is_guest_user)
         VALUES ($1, $2, $3, $4, TRUE)
@@ -416,14 +441,14 @@ exports.guestLogin = async (req, res) => {
       `;
 
       const dummyEmail = `guest_${Date.now()}@farmerlogistics.com`;
-      
+
       const newGuestResult = await db.query(newGuestQuery, [
         phone_number,
-        'Guest',       
-        'User',
+        "Guest",
+        "User",
         dummyEmail,
       ]);
-      
+
       customer = newGuestResult.rows[0];
     }
 
@@ -443,11 +468,14 @@ exports.guestLogin = async (req, res) => {
       token: token,
       customer: customer,
     });
-
   } catch (error) {
-    logger.error(`[GUEST_AUTH] Error during guest login for ${phone_number}: ${error.message}`);
-    if (error.code === '23505') {
-        return res.status(500).json({ message: "An unexpected error occurred. Please try again." });
+    logger.error(
+      `[GUEST_AUTH] Error during guest login for ${phone_number}: ${error.message}`
+    );
+    if (error.code === "23505") {
+      return res
+        .status(500)
+        .json({ message: "An unexpected error occurred. Please try again." });
     }
     res.status(500).json({ message: "Internal server error." });
   }

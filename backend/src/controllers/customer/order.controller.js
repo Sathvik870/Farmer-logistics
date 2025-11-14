@@ -3,6 +3,7 @@ const logger = require("../../config/logger");
 const { convertToBaseUnit } = require("../../utils/customer/unitConverter");
 const { createInvoicePDF } = require("../../utils/common/invoiceGenerator");
 const numberToWords = require("number-to-words");
+const { format } = require('date-fns');
 
 exports.placeOrder = async (req, res) => {
   const customer_id = req.customer.customer_id;
@@ -170,6 +171,166 @@ exports.placeOrder = async (req, res) => {
     return res
       .status(400)
       .json({ message: error.message || "Failed to place order." });
+  } finally {
+    client.release();
+  }
+};
+
+exports.getOrderSummary = async (req, res) => {
+  const customer_id = req.customer.customer_id;
+  logger.info(`[ORDER] Fetching order summary for customer ID: ${customer_id}`);
+
+  try {
+    const query = `
+      SELECT
+        DATE(order_date AT TIME ZONE 'Asia/Kolkata') as order_day,
+        BOOL_AND(payment_status = 'Paid') as all_paid,
+        BOOL_OR(payment_status = 'Paid') as some_paid
+      FROM
+        sales_orders
+      WHERE
+        customer_id = $1
+      GROUP BY
+        order_day
+      ORDER BY
+        order_day;
+    `;
+    const { rows } = await db.query(query, [customer_id]);
+    const dateStatus = {};
+    rows.forEach(row => {
+        const dateStr = format(new Date(row.order_day), 'yyyy-MM-dd');
+        
+        if (row.all_paid) {
+            dateStatus[dateStr] = 'paid'; 
+        } else if (row.some_paid) {
+            dateStatus[dateStr] = 'partial';
+        } else {
+            dateStatus[dateStr] = 'unpaid';
+        }
+    });
+
+    res.status(200).json(dateStatus);
+  } catch (error) {
+    console.error("Error fetching order summary:", error);
+    logger.error(`[ORDER] Error fetching order summary: ${error.message}`);
+    res.status(500).json({ message: "Failed to fetch order summary." });
+  }
+};
+
+exports.getInvoicesForDate = async (req, res) => {
+  const customer_id = req.customer.customer_id;
+  const { date } = req.params;
+  logger.info(
+    `[ORDER] Fetching invoices for customer ID ${customer_id} on date: ${date}`
+  );
+
+  try {
+    const query = `
+            SELECT i.invoice_id, i.invoice_code, i.total_amount, i.invoice_date
+            FROM invoices i
+            WHERE i.customer_id = $1 AND DATE(i.invoice_date) = $2
+            ORDER BY i.invoice_date DESC;
+        `;
+    const { rows } = await db.query(query, [customer_id, date]);
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching invoices for date:", error);
+    logger.error(`[ORDER] Error fetching invoices for date: ${error.message}`);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch invoices for the specified date." });
+  }
+};
+
+exports.getInvoicePDF = async (req, res) => {
+  const customer_id = req.customer.customer_id;
+  const { invoiceCode } = req.params;
+
+  logger.info(
+    `[PDF_DOWNLOAD] Customer ID ${customer_id} requested PDF for invoice code: ${invoiceCode}`
+  );
+
+  const client = await db.connect();
+
+  try {
+    const query = `
+      SELECT
+        i.invoice_id, i.invoice_code, i.invoice_date, i.subtotal, 
+        i.delivery_charges, i.total_amount,
+        so.sales_order_id, so.order_date,
+        c.first_name, c.last_name, c.email, c.phone_number, 
+        c.address, c.city, c.state,
+        p.product_name, p.sell_per_unit_qty, p.selling_unit,
+        soi.sold_quantity, soi.sold_price
+      FROM invoices i
+      JOIN sales_orders so ON i.sales_order_id = so.sales_order_id
+      JOIN customers c ON i.customer_id = c.customer_id
+      JOIN sales_order_items soi ON so.sales_order_id = soi.sales_order_id
+      JOIN products p ON soi.product_id = p.product_id
+      WHERE 
+        i.invoice_code = $1 AND i.customer_id = $2;
+    `;
+
+    const { rows } = await client.query(query, [invoiceCode, customer_id]);
+
+    if (rows.length === 0) {
+      logger.warn(
+        `[PDF_DOWNLOAD] Invoice not found or access denied for invoice ${invoiceCode}, customer ${customer_id}`
+      );
+      return res
+        .status(404)
+        .json({
+          message:
+            "Invoice not found or you do not have permission to view it.",
+        });
+    }
+
+    const firstRow = rows[0];
+
+    const invoiceData = {
+      order: {
+        sales_order_id: firstRow.sales_order_id,
+        sales_order_code: firstRow.invoice_code,
+        order_date: firstRow.invoice_date,
+      },
+      customer: {
+        first_name: firstRow.first_name,
+        last_name: firstRow.last_name,
+        address: firstRow.address,
+        city: firstRow.city,
+        state: firstRow.state,
+      },
+      subtotal: parseFloat(firstRow.subtotal),
+      deliveryCharges: parseFloat(firstRow.delivery_charges),
+      total: parseFloat(firstRow.total_amount),
+      totalInWords: numberToWords
+        .toWords(parseFloat(firstRow.total_amount))
+        .replace(/\b\w/g, (l) => l.toUpperCase()),
+      items: rows.map((row) => ({
+        product_name: row.product_name,
+        sell_per_unit_qty: row.sell_per_unit_qty,
+        selling_unit: row.selling_unit,
+        quantity: parseFloat(row.sold_quantity),
+        selling_price: parseFloat(row.sold_price),
+      })),
+    };
+
+    logger.info(`[PDF_DOWNLOAD] Generating PDF for invoice ${invoiceCode}`);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=invoice-${invoiceCode}.pdf`
+    );
+
+    createInvoicePDF(invoiceData, res);
+  } catch (error) {
+    logger.error(
+      `[PDF_DOWNLOAD] Error generating PDF for invoice ${invoiceCode}: ${error.message}`
+    );
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Internal server error" });
+    }
   } finally {
     client.release();
   }

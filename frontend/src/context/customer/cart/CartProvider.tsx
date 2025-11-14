@@ -6,6 +6,7 @@ import {
   type CartValidationMessages,
 } from "./CartContext.ts";
 import type { ProductWithImage } from "../../../pages/admin/ProductsPage.tsx";
+import { calculateMaxCartableQuantity } from "../../../utils/unitConverter";
 const CART_STORAGE_KEY = "farmerLogisticsCart";
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
@@ -30,10 +31,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cartItems]);
 
-  const validationMessages = useMemo<CartValidationMessages>(() => {
-    const newMessages: CartValidationMessages = {};
+  const validationData = useMemo(() => {
+    const messages: CartValidationMessages = {};
     if (products.length === 0 && cartItems.length > 0) {
-      return {};
+      return { validationMessages: {}, isCartValidForCheckout: true };
     }
 
     cartItems.forEach((cartItem) => {
@@ -42,20 +43,26 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (!liveProduct || liveProduct.saleable_quantity <= 0) {
-        newMessages[cartItem.product_id] = "Out of Stock";
-      } else if (cartItem.quantity > liveProduct.saleable_quantity) {
-        newMessages[
-          cartItem.product_id
-        ] = `Only ${liveProduct.saleable_quantity} available`;
+        messages[cartItem.product_id] = "Out of Stock";
+      } else {
+        const maxCartable = calculateMaxCartableQuantity(
+          liveProduct.saleable_quantity,
+          liveProduct.unit_type,
+          liveProduct.sell_per_unit_qty!,
+          liveProduct.selling_unit!
+        );
+        if (cartItem.quantity > maxCartable) {
+          messages[cartItem.product_id] = `Only ${maxCartable} available`;
+        }
       }
     });
-
-    return newMessages;
+    return {
+      validationMessages: messages,
+      isCartValidForCheckout: Object.keys(messages).length === 0,
+    };
   }, [cartItems, products]);
 
-  const isCartValidForCheckout = useMemo(() => {
-    return Object.keys(validationMessages).length === 0;
-  }, [validationMessages]);
+  const { validationMessages, isCartValidForCheckout } = validationData;
 
   const validateCart = async () => {
     setIsValidating(true);
@@ -95,7 +102,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCartItems((prevItems) =>
       prevItems.map((item) => {
         if (item.product_id === productId) {
-          if (item.quantity < item.saleable_quantity) {
+          const maxCartableQuantity = calculateMaxCartableQuantity(
+            item.saleable_quantity,
+            item.unit_type,
+            item.sell_per_unit_qty!,
+            item.selling_unit!
+          );
+          if (item.quantity < maxCartableQuantity) {
             return { ...item, quantity: item.quantity + 1 };
           }
         }
@@ -127,10 +140,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       );
       if (!existingItem) return prevItems;
 
+      const maxCartableQuantity = calculateMaxCartableQuantity(
+        existingItem.saleable_quantity,
+        existingItem.unit_type,
+        existingItem.sell_per_unit_qty!,
+        existingItem.selling_unit!
+      );
+
       let newQuantity = quantity;
       if (newQuantity < 0) newQuantity = 0;
-      if (newQuantity > existingItem.saleable_quantity) {
-        newQuantity = existingItem.saleable_quantity;
+      if (newQuantity > maxCartableQuantity) {
+        newQuantity = maxCartableQuantity;
       }
 
       if (newQuantity === 0) {

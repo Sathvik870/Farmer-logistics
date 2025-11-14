@@ -1,4 +1,3 @@
-// utils/unitConverter.js
 const logger = require("../../config/logger");
 
 exports.convertToBaseUnit = (soldQuantity, sellingUnit, sellPerUnitQty, baseUnit) => {

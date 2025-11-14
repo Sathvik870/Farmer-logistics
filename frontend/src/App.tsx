@@ -20,7 +20,7 @@ import SignupPage from "./pages/customer/CustomerSignupPage";
 import ShoppingPage from "./pages/customer/ShoppingPage";
 import CartPage from "./pages/customer/CartPage";
 import ProfilePage from "./pages/customer/ProfilePage";
-import OrdersPage from "./pages/customer/OrdersPage";
+import OrdersPage from './pages/customer/OrdersPage';
 
 import MainLayout from "./layouts/admin/MainLayout";
 import CustomerLayout from "./layouts/customer/CustomerLayout";

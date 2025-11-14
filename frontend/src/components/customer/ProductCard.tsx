@@ -3,6 +3,7 @@ import type { ProductWithImage } from "../../pages/admin/ProductsPage";
 import { useCart } from "../../context/customer/cart/useCart.ts";
 import { HiPlus, HiMinus, HiExclamation } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
+import { calculateMaxCartableQuantity } from '../../utils/unitConverter';
 
 interface QuantityStepperProps {
   product: ProductWithImage;
@@ -16,7 +17,13 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
   const { getItemQuantity, incrementItem, decrementItem, setItemQuantity } =
     useCart();
   const quantity = getItemQuantity(product.product_id);
-  const isAtMaxStock = quantity >= product.saleable_quantity;
+  const maxCartableQuantity = calculateMaxCartableQuantity(
+    product.saleable_quantity,
+    product.unit_type, 
+    product.sell_per_unit_qty!,
+    product.selling_unit!
+  );
+  const isAtMaxStock = quantity >= maxCartableQuantity;
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(String(quantity));
@@ -46,7 +53,7 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
 
     const numericValue = parseInt(sanitizedValue, 10);
 
-    if (numericValue > product.saleable_quantity) {
+    if (numericValue > maxCartableQuantity) {
       setShowTooltip(true);
       setTimeout(() => setShowTooltip(false), 2000);
     } else {
@@ -60,8 +67,8 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
     if (isNaN(finalQuantity)) {
       finalQuantity = 0;
     }
-    if (finalQuantity > product.saleable_quantity) {
-      finalQuantity = product.saleable_quantity;
+    if (finalQuantity > maxCartableQuantity) {
+      finalQuantity = maxCartableQuantity;
     }
     setItemQuantity(product.product_id, finalQuantity);
   };
@@ -118,7 +125,7 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
             exit={{ opacity: 0, y: 10 }}
           >
             <HiExclamation className="text-yellow-400" />
-            Max quantity is {product.saleable_quantity}
+            Max quantity is {maxCartableQuantity}
           </motion.div>
         )}
       </AnimatePresence>

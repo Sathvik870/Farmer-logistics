@@ -118,30 +118,26 @@ const OrdersPage: React.FC = () => {
         stroke: black !important;   /* or white */
     }
     .rdp-day_selected {
-        color: white !important;             /* TEXT COLOR */
+        color: #ffffff !important;             /* TEXT COLOR */
         background-color: black !important;  /* SELECTED BG */
     }
 
-    .rdp-day_selected:not([disabled]) {
-        outline: none !important;  
-        box-shadow: none !important;
-    }
     .rdp-nav_button {
         color: #387c40 !important; 
     }
     .day-paid { 
         background-color: #30c82c; 
-        color: #30c82c;
+        color: #ffffff;
         font-weight: bold;
     }
     .day-partial { 
         background-color: #dfe13d; 
-        color: #dfe13d;
+        color: #000000;
         font-weight: bold;
     }
     .day-unpaid { 
         background-color: #e85252; 
-        color: #e85252;
+        color: #ffffff;
         font-weight: bold;
     }
   `;

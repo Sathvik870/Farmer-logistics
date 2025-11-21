@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import api from "../../api.ts";
+import api from "../../../api.ts";
 
 import { AdminAuthContext, type Admin } from "./AdminAuthContext.ts";
 

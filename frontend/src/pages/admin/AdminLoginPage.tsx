@@ -6,7 +6,7 @@ import {
   useNavigate, 
   // Link 
 } from "react-router-dom";
-import { useAdminAuth } from "../../context/admin/useAdminAuth";
+import { useAdminAuth } from "../../context/admin/auth/useAdminAuth";
 import api from "../../api";
 import loginImage from "../../assets/login-page-bg.png";
 import logo from "../../assets/main-logo.jpg";

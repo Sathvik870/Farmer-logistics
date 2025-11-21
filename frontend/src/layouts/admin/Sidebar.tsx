@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAdminAuth } from "../../context/admin/useAdminAuth";
+import { useAdminAuth } from "../../context/admin/auth/useAdminAuth";
 import userAvatar from "../../assets/admin-user.svg";
 import {
   HiOutlineHome,
@@ -11,6 +11,7 @@ import {
   HiOutlineLogout,
   HiOutlineShoppingBag,
   // HiOutlineSwitchHorizontal,
+  HiOutlineTruck, 
 } from "react-icons/hi";
 
 interface SidebarProps {
@@ -32,6 +33,11 @@ const mainLinks = [
     name: "Purchase orders",
     path: "/admin/purchase-orders",
     icon: HiOutlineCalendar,
+  },
+  {
+    name: "Sales Orders",
+    path: "/admin/sales-orders",
+    icon: HiOutlineTruck,
   },
   // {
   //   name: "Sales Allocation",

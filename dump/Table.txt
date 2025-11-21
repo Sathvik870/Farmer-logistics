@@ -235,3 +235,11 @@ CREATE VIEW customer_order_history AS
      JOIN customers c ON ((so.customer_id = c.customer_id)))
      JOIN sales_order_items soi ON ((so.sales_order_id = soi.sales_order_id)))
      JOIN products p ON ((soi.product_id = p.product_id)));
+
+CREATE TABLE admin_subscriptions (
+    id SERIAL PRIMARY KEY,
+    endpoint TEXT UNIQUE NOT NULL,
+    keys JSONB NOT NULL, -- Stores p256dh and auth
+    user_agent VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

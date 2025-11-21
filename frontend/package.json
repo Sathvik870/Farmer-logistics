@@ -26,8 +26,10 @@
     "react-pdf": "^10.2.0",
     "react-router-dom": "^7.9.1",
     "recharts": "^3.2.1",
+    "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.13",
-    "use-debounce": "^10.0.6"
+    "use-debounce": "^10.0.6",
+    "use-sound": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

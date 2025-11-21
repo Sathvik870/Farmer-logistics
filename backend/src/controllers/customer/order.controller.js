@@ -3,7 +3,8 @@ const logger = require("../../config/logger");
 const { convertToBaseUnit } = require("../../utils/customer/unitConverter");
 const { createInvoicePDF } = require("../../utils/common/invoiceGenerator");
 const numberToWords = require("number-to-words");
-const { format } = require('date-fns');
+const { format } = require("date-fns");
+const { sendPushToAdmins } = require("../../utils/admin/pushNotification");
 
 exports.placeOrder = async (req, res) => {
   const customer_id = req.customer.customer_id;
@@ -156,6 +157,29 @@ exports.placeOrder = async (req, res) => {
 
     logger.info(`[PDF] Successfully generated PDF buffer.`);
 
+    const pushPayload = {
+      title: "New Order Received!",
+      body: `Order #${newInvoice.invoice_code} from ${customer_details.first_name}`,
+      url: "/admin/sales-orders",
+    };
+    sendPushToAdmins(pushPayload);
+
+    const newOrderPayload = {
+      sales_order_id,
+      customer_id,
+      customer_name: `${customer_details.first_name} ${customer_details.last_name}`,
+      total_amount: totalAmount,
+      status: "Confirmed",
+      delivery_status: "Packing",
+      order_date: new Date().toISOString(),
+      shipping_address: customer_details.address,
+    };
+
+    req.io.emit("new_order", newOrderPayload);
+    logger.info(
+      `[SOCKET] Emitted 'new_order' event for order ID: ${sales_order_id}`
+    );
+
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
@@ -197,16 +221,16 @@ exports.getOrderSummary = async (req, res) => {
     `;
     const { rows } = await db.query(query, [customer_id]);
     const dateStatus = {};
-    rows.forEach(row => {
-        const dateStr = format(new Date(row.order_day), 'yyyy-MM-dd');
-        
-        if (row.all_paid) {
-            dateStatus[dateStr] = 'paid'; 
-        } else if (row.some_paid) {
-            dateStatus[dateStr] = 'partial';
-        } else {
-            dateStatus[dateStr] = 'unpaid';
-        }
+    rows.forEach((row) => {
+      const dateStr = format(new Date(row.order_day), "yyyy-MM-dd");
+
+      if (row.all_paid) {
+        dateStatus[dateStr] = "paid";
+      } else if (row.some_paid) {
+        dateStatus[dateStr] = "partial";
+      } else {
+        dateStatus[dateStr] = "unpaid";
+      }
     });
 
     res.status(200).json(dateStatus);
@@ -277,12 +301,9 @@ exports.getInvoicePDF = async (req, res) => {
       logger.warn(
         `[PDF_DOWNLOAD] Invoice not found or access denied for invoice ${invoiceCode}, customer ${customer_id}`
       );
-      return res
-        .status(404)
-        .json({
-          message:
-            "Invoice not found or you do not have permission to view it.",
-        });
+      return res.status(404).json({
+        message: "Invoice not found or you do not have permission to view it.",
+      });
     }
 
     const firstRow = rows[0];

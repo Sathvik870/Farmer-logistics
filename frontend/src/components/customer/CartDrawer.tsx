@@ -66,7 +66,6 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     isValidating,
   } = useCart();
   const { customer } = useCustomerAuth();
-  console.log("Customer Details in CartDrawer:", customer);
   const { location } = useLocation();
   const { showAlert } = useAlert();
   const { fetchProducts } = useProducts();

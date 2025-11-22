@@ -9,11 +9,14 @@ exports.getAllSalesOrders = async (req, res) => {
         so.sales_order_id,
         so.order_date,
         so.status as delivery_status,
+        so.payment_status, -- Make sure this is fetched
+        so.payment_method, -- And this
         c.customer_id,
         CONCAT(c.first_name, ' ', c.last_name) as customer_name,
         c.phone_number,
         i.shipping_address,
         i.total_amount,
+        i.invoice_code, -- Added this
         COALESCE(
           json_agg(
             json_build_object(
@@ -75,13 +78,53 @@ exports.updateOrderStatus = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ message: "Order not found." });
     }
-
+    const updatedOrder = rows[0];
+    req.io.emit("order_status_updated", { 
+        customerId: updatedOrder.customer_id,
+        orderId: updatedOrder.sales_order_id,
+        status: updatedOrder.status 
+    });
+    logger.info(`[SOCKET] Emitted status update for Order #${id} to Customer ${updatedOrder.customer_id}`);
     res
       .status(200)
       .json({ message: "Status updated successfully", order: rows[0] });
   } catch (error) {
     logger.error(
       `[ADMIN_SALES] Error updating status for order ${id}: ${error.message}`
+    );
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.updatePaymentStatus = async (req, res) => {
+  const { id } = req.params;
+  const { payment_status } = req.body;
+
+  logger.info(
+    `[ADMIN_SALES] Updating payment status for order ${id} to: ${payment_status}`
+  );
+
+  if (!payment_status) {
+    return res.status(400).json({ message: "Payment status is required." });
+  }
+
+  try {
+    const query = `
+      UPDATE sales_orders 
+      SET payment_status = $1 
+      WHERE sales_order_id = $2
+      RETURNING sales_order_id, payment_status;
+    `;
+    const { rows } = await db.query(query, [payment_status, id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    res.status(200).json({ message: "Payment status updated", order: rows[0] });
+  } catch (error) {
+    logger.error(
+      `[ADMIN_SALES] Error updating payment status for order ${id}: ${error.message}`
     );
     res.status(500).json({ message: "Internal server error" });
   }

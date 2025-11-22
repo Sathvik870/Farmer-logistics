@@ -166,13 +166,24 @@ exports.placeOrder = async (req, res) => {
 
     const newOrderPayload = {
       sales_order_id,
+      invoice_code: newInvoice.invoice_code,
       customer_id,
       customer_name: `${customer_details.first_name} ${customer_details.last_name}`,
+      phone_number: customer_details.phone_number,
       total_amount: totalAmount,
-      status: "Confirmed",
-      delivery_status: "Packing",
+      delivery_status: "Confirmed",
+      payment_status: paymentMethod === "COD" ? "Pending" : "Paid",
+      payment_method: paymentMethod,
       order_date: new Date().toISOString(),
       shipping_address: customer_details.address,
+      
+      order_items: cartItems.map(item => ({
+          product_name: item.product_name,
+          quantity: item.quantity, 
+          unit_type: item.unit_type,
+          selling_unit: item.selling_unit, 
+          price: item.selling_price
+      }))
     };
 
     req.io.emit("new_order", newOrderPayload);

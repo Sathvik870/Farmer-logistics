@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSocket } from "../../context/admin/socket/useSocket.ts";
+import { useSocket } from "../../context/common/socket/useSocket.ts";
 import api from "../../api";
 import { HiVolumeUp, HiVolumeOff, HiEye } from "react-icons/hi";
 import useSound from "use-sound";
@@ -9,14 +9,17 @@ import OrderItemsModal from "../../components/admin/OrderItemsModal";
 
 interface Order {
   sales_order_id: number;
+  invoice_code: string;
   customer_name: string;
   total_amount: number;
   delivery_status: string;
+  payment_status: string;
+  payment_method: string;
   order_date: string;
   shipping_address: string;
-  isNew?: boolean;
   phone_number: string;
   order_items: [];
+  isNew?: boolean;
 }
 
 const SalesOrdersPage: React.FC = () => {
@@ -57,6 +60,24 @@ const SalesOrdersPage: React.FC = () => {
       }
     } else {
       setIsSoundEnabled(false);
+    }
+  };
+
+  const handlePaymentStatusChange = async (
+    orderId: number,
+    newStatus: string
+  ) => {
+    try {
+      await api.put(`/api/admin/sales-orders/${orderId}/payment-status`, {
+        payment_status: newStatus,
+      });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.sales_order_id === orderId ? { ...o, payment_status: newStatus } : o
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update payment status", error);
     }
   };
 
@@ -133,9 +154,7 @@ const SalesOrdersPage: React.FC = () => {
         <button
           onClick={toggleNotifications}
           className={`p-3 rounded-full ${
-            isSoundEnabled
-              ? "text-[#387c40]"
-              : "text-red-600"
+            isSoundEnabled ? "text-[#387c40]" : "text-red-600"
           } transition-colors`}
           title={isSoundEnabled ? "Mute Notifications" : "Enable Notifications"}
         >
@@ -155,6 +174,9 @@ const SalesOrdersPage: React.FC = () => {
                 Order ID
               </th>
               <th className="px-6 py-3 text-sm font-bold text-white uppercase">
+                Invoice
+              </th>
+              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
                 Customer
               </th>
               <th className="px-6 py-3 text-sm font-bold text-white uppercase">
@@ -168,6 +190,9 @@ const SalesOrdersPage: React.FC = () => {
               </th>
               <th className="px-6 py-3 text-sm font-bold text-white uppercase">
                 Amount
+              </th>
+              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
+                Payment
               </th>
               <th className="px-6 py-3 text-sm font-bold text-white uppercase">
                 Order Status
@@ -187,12 +212,15 @@ const SalesOrdersPage: React.FC = () => {
                 <td className="px-6 py-4 font-medium">
                   {order.sales_order_id}
                 </td>
+                <td className="px-6 py-4 text-sm font-mono text-black">
+                  {order.invoice_code || "Pending"}
+                </td>
                 <td className="px-6 py-4">{order.customer_name}</td>
                 <td className="px-6 py-4 font-mono text-sm">
                   {order.phone_number}
                 </td>
                 <td
-                  className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs"
+                  className="px-6 py-4 text-sm text-black truncate max-w-xs"
                   title={order.shipping_address}
                 >
                   {order.shipping_address || "N/A"}
@@ -212,6 +240,53 @@ const SalesOrdersPage: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 font-bold text-green-600">
                   ₹{Number(order.total_amount).toFixed(2)}
+                </td>
+                <td className="px-6 py-4">
+                  {order.payment_method === "COD" ? (
+                    <div className="relative inline-block w-full max-w-[100px]">
+                      <select
+                        value={order.payment_status}
+                        onChange={(e) =>
+                          handlePaymentStatusChange(
+                            order.sales_order_id,
+                            e.target.value
+                          )
+                        }
+                        className={`
+                          appearance-none w-full px-3 py-1.5 text-sm font-semibold border rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all
+                          ${
+                            order.payment_status === "Paid"
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          }
+                        `}
+                      >
+                        <option value="Unpaid">Pending</option>
+                        <option value="Paid">Paid</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <svg
+                          className="w-3 h-3 text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {order.payment_status === "Paid"
+                        ? "Paid (UPI)"
+                        : order.payment_status}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <div className="relative inline-block w-full max-w-[140px]">

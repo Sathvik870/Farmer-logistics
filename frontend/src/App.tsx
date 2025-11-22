@@ -8,7 +8,7 @@ import { AlertProvider } from "./context/common/AlertContext";
 import { CategoryProvider } from "./context/customer/category/CategoryProvider";
 import { SearchProvider } from "./context/customer/search/SearchProvider";
 import { ProductProvider } from "./context/customer/product/ProductProvider";
-import { SocketProvider } from "./context/admin/socket/SocketProvider";
+import { SocketProvider } from "./context/common/socket/SocketProvider";
 
 import AdminLogin from "./pages/admin/AdminLoginPage";
 // import AdminSignup from "./pages/admin/AdminSignupPage";
@@ -32,8 +32,8 @@ import PublicOnlyRoute from "./components/common/PublicOnlyRoute";
 
 function App() {
   return (
-    <CustomerAuthProvider>
-      <SocketProvider>
+    <SocketProvider>
+      <CustomerAuthProvider>
         <AdminAuthProvider>
           <AlertProvider>
             <LocationProvider>
@@ -91,8 +91,8 @@ function App() {
             </LocationProvider>
           </AlertProvider>
         </AdminAuthProvider>
-      </SocketProvider>
-    </CustomerAuthProvider>
+      </CustomerAuthProvider>
+    </SocketProvider>
   );
 }
 

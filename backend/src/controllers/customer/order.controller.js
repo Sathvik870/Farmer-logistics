@@ -13,7 +13,6 @@ exports.placeOrder = async (req, res) => {
   if (!cartItems || cartItems.length === 0) {
     return res.status(400).json({ message: "Cart is empty." });
   }
-
   const client = await db.connect();
   logger.info(
     `[ORDER] Starting order placement for customer ID: ${customer_id}`
@@ -163,7 +162,6 @@ exports.placeOrder = async (req, res) => {
       url: "/admin/sales-orders",
     };
     sendPushToAdmins(pushPayload);
-
     const newOrderPayload = {
       sales_order_id,
       invoice_code: newInvoice.invoice_code,
@@ -172,18 +170,18 @@ exports.placeOrder = async (req, res) => {
       phone_number: customer_details.phone_number,
       total_amount: totalAmount,
       delivery_status: "Confirmed",
-      payment_status: paymentMethod === "COD" ? "Pending" : "Paid",
-      payment_method: paymentMethod,
+      payment_status: paymentMethod || "COD" ? "Pending" : "Paid",
+      payment_method: paymentMethod || "COD",
       order_date: new Date().toISOString(),
       shipping_address: customer_details.address,
-      
-      order_items: cartItems.map(item => ({
-          product_name: item.product_name,
-          quantity: item.quantity, 
-          unit_type: item.unit_type,
-          selling_unit: item.selling_unit, 
-          price: item.selling_price
-      }))
+
+      order_items: cartItems.map((item) => ({
+        product_name: item.product_name,
+        quantity: item.quantity,
+        unit_type: item.unit_type,
+        selling_unit: item.selling_unit,
+        price: item.selling_price,
+      })),
     };
 
     req.io.emit("new_order", newOrderPayload);
@@ -261,8 +259,15 @@ exports.getInvoicesForDate = async (req, res) => {
 
   try {
     const query = `
-            SELECT i.invoice_id, i.invoice_code, i.total_amount, i.invoice_date
+            SELECT 
+              i.invoice_id, 
+              i.invoice_code, 
+              i.total_amount, 
+              i.invoice_date,
+              so.sales_order_id, -- Needed for cancel API
+              so.status          -- Needed for UI logic
             FROM invoices i
+            JOIN sales_orders so ON i.sales_order_id = so.sales_order_id
             WHERE i.customer_id = $1 AND DATE(i.invoice_date) = $2
             ORDER BY i.invoice_date DESC;
         `;
@@ -292,7 +297,7 @@ exports.getInvoicePDF = async (req, res) => {
       SELECT
         i.invoice_id, i.invoice_code, i.invoice_date, i.subtotal, 
         i.delivery_charges, i.total_amount,
-        so.sales_order_id, so.order_date,
+        so.sales_order_id, so.order_date, so.status,
         c.first_name, c.last_name, c.email, c.phone_number, 
         c.address, c.city, c.state,
         p.product_name, p.sell_per_unit_qty, p.selling_unit,
@@ -324,6 +329,7 @@ exports.getInvoicePDF = async (req, res) => {
         sales_order_id: firstRow.sales_order_id,
         sales_order_code: firstRow.invoice_code,
         order_date: firstRow.invoice_date,
+        status: firstRow.status,
       },
       customer: {
         first_name: firstRow.first_name,
@@ -363,6 +369,92 @@ exports.getInvoicePDF = async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ message: "Internal server error" });
     }
+  } finally {
+    client.release();
+  }
+};
+
+exports.cancelOrder = async (req, res) => {
+  const customer_id = req.customer.customer_id;
+  const { orderId } = req.params;
+
+  const client = await db.connect();
+  logger.info(
+    `[ORDER_CANCEL] Customer ${customer_id} cancelling order ${orderId}`
+  );
+
+  try {
+    await client.query("BEGIN");
+    const checkQuery = `
+      SELECT sales_order_id, status FROM sales_orders 
+      WHERE sales_order_id = $1 AND customer_id = $2
+      FOR UPDATE;
+    `;
+    const { rows } = await client.query(checkQuery, [orderId, customer_id]);
+
+    if (rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    const order = rows[0];
+    const allowedStatuses = ["Confirmed", "Packing"];
+
+    if (!allowedStatuses.includes(order.status)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        message: `Order cannot be cancelled. Current status is ${order.status}.`,
+      });
+    }
+
+    const updateOrderQuery = `
+      UPDATE sales_orders SET status = 'Cancelled' WHERE sales_order_id = $1 RETURNING *;
+    `;
+    const updatedOrderResult = await client.query(updateOrderQuery, [orderId]);
+    const updatedOrder = updatedOrderResult.rows[0];
+
+    const itemsQuery = `
+      SELECT p.product_id, soi.sold_quantity, p.unit_type, p.selling_unit, p.sell_per_unit_qty, p.product_name
+      FROM sales_order_items soi
+      JOIN products p ON soi.product_id = p.product_id
+      WHERE soi.sales_order_id = $1;
+    `;
+    const { rows: items } = await client.query(itemsQuery, [orderId]);
+
+    for (const item of items) {
+      const amountToRestore = convertToBaseUnit(
+        parseFloat(item.sold_quantity),
+        item.selling_unit,
+        parseFloat(item.sell_per_unit_qty),
+        item.unit_type
+      );
+
+      logger.info(
+        `[ORDER_CANCEL] Restoring ${amountToRestore} ${item.unit_type} for ${item.product_name}`
+      );
+
+      await client.query(
+        `
+        UPDATE stocks 
+        SET saleable_quantity = saleable_quantity + $1, last_updated = CURRENT_TIMESTAMP 
+        WHERE product_id = $2
+      `,
+        [amountToRestore, item.product_id]
+      );
+    }
+
+    await client.query("COMMIT");
+    req.io.emit("order_status_updated", {
+      orderId: orderId,
+      customerId: customer_id,
+      status: "Cancelled",
+    });
+
+    res.status(200).json({ message: "Order cancelled successfully." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    logger.error(`[ORDER_CANCEL] Error: ${error.message}`);
+    res.status(500).json({ message: "Failed to cancel order." });
   } finally {
     client.release();
   }

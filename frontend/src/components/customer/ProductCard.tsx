@@ -3,7 +3,7 @@ import type { ProductWithImage } from "../../pages/admin/ProductsPage";
 import { useCart } from "../../context/customer/cart/useCart.ts";
 import { HiPlus, HiMinus, HiExclamation } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
-import { calculateMaxCartableQuantity } from '../../utils/unitConverter';
+import { calculateMaxCartableQuantity } from "../../utils/unitConverter";
 
 interface QuantityStepperProps {
   product: ProductWithImage;
@@ -19,7 +19,7 @@ const QuantityStepper: React.FC<QuantityStepperProps> = ({
   const quantity = getItemQuantity(product.product_id);
   const maxCartableQuantity = calculateMaxCartableQuantity(
     product.saleable_quantity,
-    product.unit_type, 
+    product.unit_type,
     product.sell_per_unit_qty!,
     product.selling_unit!
   );
@@ -138,7 +138,14 @@ const ProductCard: React.FC<{ product: ProductWithImage }> = ({ product }) => {
   const quantity = getItemQuantity(product.product_id);
 
   const [isStepperEditing, setIsStepperEditing] = useState(false);
-  const isOutOfStock = product.saleable_quantity <= 0;
+  const maxPossibleUnits = calculateMaxCartableQuantity(
+    product.saleable_quantity,
+    product.unit_type,
+    product.sell_per_unit_qty!,
+    product.selling_unit!
+  );
+
+  const isOutOfStock = product.saleable_quantity <= 0 || maxPossibleUnits < 1;
   const showAddButton = !isOutOfStock && quantity === 0 && !isStepperEditing;
   const showStepper = !isOutOfStock && (quantity > 0 || isStepperEditing);
   return (

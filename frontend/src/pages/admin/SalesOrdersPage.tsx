@@ -6,6 +6,7 @@ import useSound from "use-sound";
 import notificationSound from "../../assets/sounds/notification.mp3";
 import { registerForPushNotifications } from "../../utils/pushManager";
 import OrderItemsModal from "../../components/admin/OrderItemsModal";
+import { useAlert } from "../../context/common/AlertContext";
 
 interface Order {
   sales_order_id: number;
@@ -26,6 +27,7 @@ const SalesOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const socket = useSocket();
+  const { showAlert } = useAlert();
   const [selectedOrderItems, setSelectedOrderItems] = useState<{
     items: [];
     id: number;
@@ -67,17 +69,29 @@ const SalesOrdersPage: React.FC = () => {
     orderId: number,
     newStatus: string
   ) => {
-    try {
-      await api.put(`/api/admin/sales-orders/${orderId}/payment-status`, {
-        payment_status: newStatus,
-      });
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.sales_order_id === orderId ? { ...o, payment_status: newStatus } : o
-        )
+    
+    const performUpdate = async () => {
+      try {
+        await api.put(`/api/admin/sales-orders/${orderId}/payment-status`, {
+          payment_status: newStatus,
+        });
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.sales_order_id === orderId ? { ...o, payment_status: newStatus } : o
+          )
+        );
+      } catch (error: any) {
+        showAlert(error.response?.data?.message || "Failed to update payment status.", "error");
+      }
+    };
+    if (newStatus === 'Paid') {
+      showAlert(
+        "Are you sure you want to mark this order as Paid? This action cannot be easily undone.",
+        "warning",
+        performUpdate
       );
-    } catch (error) {
-      console.error("Failed to update payment status", error);
+    } else {
+      performUpdate();
     }
   };
 
@@ -131,19 +145,34 @@ const SalesOrdersPage: React.FC = () => {
   }, [socket, isSoundEnabled, play]);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
-    try {
-      await api.put(`/api/admin/sales-orders/${orderId}/status`, {
-        status: newStatus,
-      });
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.sales_order_id === orderId
-            ? { ...o, delivery_status: newStatus }
-            : o
-        )
+    const performUpdate = async () => {
+      try {
+        await api.put(`/api/admin/sales-orders/${orderId}/status`, {
+          status: newStatus,
+        });
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.sales_order_id === orderId
+              ? { ...o, delivery_status: newStatus }
+              : o
+          )
+        );
+      } catch (error: any) {
+        showAlert(
+          error.response?.data?.message || "Failed to update status.",
+          "error"
+        );
+      }
+    };
+
+    if (newStatus === "Cancelled") {
+      showAlert(
+        "Are you sure you want to cancel this order? This will restore the items to stock.",
+        "warning",
+        performUpdate
       );
-    } catch (error) {
-      console.error("Failed to update status", error);
+    } else {
+      performUpdate();
     }
   };
 
@@ -245,6 +274,7 @@ const SalesOrdersPage: React.FC = () => {
                   {order.payment_method === "COD" ? (
                     <div className="relative inline-block w-full max-w-[100px]">
                       <select
+                        disabled={order.payment_status === 'Paid'}
                         value={order.payment_status}
                         onChange={(e) =>
                           handlePaymentStatusChange(
@@ -254,6 +284,7 @@ const SalesOrdersPage: React.FC = () => {
                         }
                         className={`
                           appearance-none w-full px-3 py-1.5 text-sm font-semibold border rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all
+                          disabled:cursor-not-allowed 
                           ${
                             order.payment_status === "Paid"
                               ? "bg-green-100 text-green-800 border-green-200"
@@ -295,13 +326,17 @@ const SalesOrdersPage: React.FC = () => {
                       onChange={(e) =>
                         handleStatusChange(order.sales_order_id, e.target.value)
                       }
+                      disabled={
+                        order.delivery_status === "Cancelled" ||
+                        order.delivery_status === "Delivered"
+                      }
                       className={`
                           appearance-none w-full px-3 py-1.5 text-sm font-semibold border rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all
                           ${
                             order.delivery_status === "Delivered"
-                              ? "bg-green-50 border-green-200 text-green-700 focus:ring-green-500"
+                              ? "bg-green-50 border-green-200 text-green-700 focus:ring-green-500 disabled:cursor-not-allowed"
                               : order.delivery_status === "Cancelled"
-                              ? "bg-red-50 border-red-200 text-red-700 focus:ring-red-500"
+                              ? "bg-red-50 border-red-200 text-red-700 focus:ring-red-500 disabled:cursor-not-allowed"
                               : order.delivery_status === "In Transit"
                               ? "bg-blue-50 border-blue-200 text-blue-700 focus:ring-blue-500"
                               : "bg-yellow-50 border-yellow-200 text-yellow-700 focus:ring-yellow-500"

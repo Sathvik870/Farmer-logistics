@@ -9,7 +9,7 @@ import {
   HiOutlineDocumentText,
 } from "react-icons/hi";
 import PDFViewerModal from "../../components/customer/PDFViewerModal";
-
+import { useAlert } from "../../context/common/AlertContext"; 
 interface DateStatus {
   [date: string]: "paid" | "unpaid" | "partial";
 }
@@ -19,10 +19,13 @@ interface Invoice {
   invoice_code: string;
   total_amount: number;
   invoice_date: string;
+  sales_order_id: number;
+  status: string;
 }
 
 const OrdersPage: React.FC = () => {
   const [dateStatus, setDateStatus] = useState<DateStatus>({});
+  const { showAlert } = useAlert();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
@@ -31,6 +34,31 @@ const OrdersPage: React.FC = () => {
   const [viewingInvoiceCode, setViewingInvoiceCode] = useState<string | null>(
     null
   );
+
+  const handleCancelOrder = (e: React.MouseEvent, orderId: number) => {
+    e.stopPropagation();
+    const performCancel = async () => {
+      try {
+        await api.put(`/api/customer/orders/${orderId}/cancel`);
+        if (selectedDate) {
+            const dateStr = format(selectedDate, "yyyy-MM-dd");
+            const { data } = await api.get<Invoice[]>(`/api/customer/orders/by-date/${dateStr}`);
+            setInvoices(data);
+        }
+        
+        showAlert("Order cancelled successfully.", "success");
+      } catch (error: any) {
+        showAlert(error.response?.data?.message || "Failed to cancel order.", "error");
+      }
+    };
+
+    showAlert(
+      "Are you sure you want to cancel this order? This action cannot be undone.",
+      "warning",
+      performCancel
+    );
+  };
+
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -179,8 +207,15 @@ const OrdersPage: React.FC = () => {
                 invoices.map((invoice) => (
                   <div
                     key={invoice.invoice_id}
-                    className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden"
+                    className={`border border-gray-200 rounded-lg bg-gray-50 overflow-hidden${
+                      invoice.status === "Cancelled"
+                        ? "border-red-300 bg-red-50"
+                        : ""
+                    }`}
                   >
+                    {invoice.status === "Cancelled" && (
+                      <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+                    )}
                     <button
                       onClick={() =>
                         setViewingInvoiceCode(invoice.invoice_code)
@@ -206,14 +241,41 @@ const OrdersPage: React.FC = () => {
                         </div>
                       </div>
                     </button>
-                    <div className="border-t-1 border-gray-200 p-2 flex justify-end">
-                      <button
-                        onClick={(e) => handleDownload(e, invoice.invoice_code)}
-                        className="flex items-center gap-2 text-sm font-semibold text-[#387c40]  p-1 rounded-md transition-colors"
+                    <div className="border-t-1 border-gray-200 p-2 flex justify-between items-center">
+                      <span
+                        className={`text-xs font-bold px-2 py-1 rounded 
+                                    ${
+                                      invoice.status === "Cancelled"
+                                        ? "bg-red-200 text-red-800"
+                                        : invoice.status === "Delivered"
+                                        ? "bg-green-200 text-green-800"
+                                        : "bg-blue-100 text-blue-800"
+                                    }`}
                       >
-                        <HiOutlineDocumentDownload size={16} />
-                        Download
-                      </button>
+                        {invoice.status}
+                      </span>
+                      <div className="flex gap-2">
+                        {(invoice.status === "Confirmed" ||
+                          invoice.status === "Packing") && (
+                          <button
+                            onClick={(e) =>
+                              handleCancelOrder(e, invoice.sales_order_id)
+                            }
+                            className="text-xs font-semibold text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 px-3 py-1 rounded-md transition-colors"
+                          >
+                            Cancel Order
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) =>
+                            handleDownload(e, invoice.invoice_code)
+                          }
+                          className="flex items-center gap-2 text-sm font-semibold text-[#387c40]  p-1 rounded-md transition-colors"
+                        >
+                          <HiOutlineDocumentDownload size={16} />
+                          Download
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

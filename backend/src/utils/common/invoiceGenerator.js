@@ -77,6 +77,24 @@ exports.createInvoicePDF = (invoiceData, stream) => {
     doc.font('Helvetica').text(`Indian Rupee ${invoiceData.totalInWords} Only`, 50, footerTop + 15);
     
     doc.fontSize(10).text('Thank you for your business!', 50, footerTop + 50);
-
+    console.log(invoiceData.order.delivery_status);
+    if (invoiceData.order.status === 'Cancelled') {
+        doc.save(); 
+        const pageHeight = doc.page.height;
+        const pageWidth = doc.page.width;
+        
+        doc.translate(pageWidth / 2, pageHeight / 2);
+        doc.rotate(-45);
+        
+        doc.fontSize(50);
+        doc.font('Helvetica-Bold');
+        doc.fillColor('red');
+        doc.opacity(0.3); 
+        doc.text('CANCELLED', -200, -40, {
+            width: 400,
+            align: 'center'
+        });
+        doc.restore(); 
+    }
     doc.end();
 };

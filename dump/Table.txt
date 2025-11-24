@@ -194,8 +194,8 @@ Table name : stocks
 CREATE TABLE  stocks (
     stock_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id integer NOT NULL UNIQUE,
-    available_quantity numeric(10,2) DEFAULT 0,
-    saleable_quantity numeric(10,2) DEFAULT 0,
+    available_quantity numeric(10,3) DEFAULT 0,
+    saleable_quantity numeric(10,3) DEFAULT 0,
     last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT stocks_product_id_fkey FOREIGN KEY (product_id) REFERENCES  products(product_id) ON DELETE CASCADE
 );

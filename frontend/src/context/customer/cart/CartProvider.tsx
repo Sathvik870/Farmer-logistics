@@ -41,19 +41,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const liveProduct = products.find(
         (p) => p.product_id === cartItem.product_id
       );
-
-      if (!liveProduct || liveProduct.saleable_quantity <= 0) {
-        messages[cartItem.product_id] = "Out of Stock";
-      } else {
-        const maxCartable = calculateMaxCartableQuantity(
+      let maxCartable = 0;
+      if (liveProduct) {
+        maxCartable = calculateMaxCartableQuantity(
           liveProduct.saleable_quantity,
           liveProduct.unit_type,
           liveProduct.sell_per_unit_qty!,
           liveProduct.selling_unit!
         );
-        if (cartItem.quantity > maxCartable) {
-          messages[cartItem.product_id] = `Only ${maxCartable} available`;
-        }
+      }
+
+      if (
+        !liveProduct ||
+        liveProduct.saleable_quantity <= 0 ||
+        maxCartable < 1
+      ) {
+        messages[cartItem.product_id] = "Out of Stock";
+      } else if (cartItem.quantity > maxCartable) {
+        messages[cartItem.product_id] = `Only ${maxCartable} available`;
       }
     });
     return {
@@ -77,7 +82,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addToCart = (product: ProductWithImage) => {
-    if (product.saleable_quantity < 1) return;
+    const maxUnits = calculateMaxCartableQuantity(
+      product.saleable_quantity,
+      product.unit_type,
+      product.sell_per_unit_qty!,
+      product.selling_unit!
+    );
+    if (maxUnits < 1) return;
     setCartItems((prevItems) => {
       const existingItem = prevItems.find(
         (item) => item.product_id === product.product_id

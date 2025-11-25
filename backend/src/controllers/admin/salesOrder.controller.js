@@ -1,6 +1,7 @@
 const db = require("../../config/db");
 const logger = require("../../config/logger");
 const { convertToBaseUnit } = require("../../utils/customer/unitConverter");
+const { sendPushToCustomer } = require("../../utils/common/pushService");
 
 exports.getAllSalesOrders = async (req, res) => {
   logger.info("[ADMIN_SALES] Fetching all sales orders.");
@@ -10,14 +11,14 @@ exports.getAllSalesOrders = async (req, res) => {
         so.sales_order_id,
         so.order_date,
         so.status as delivery_status,
-        so.payment_status, -- Make sure this is fetched
-        so.payment_method, -- And this
+        so.payment_status,
+        so.payment_method,
         c.customer_id,
         CONCAT(c.first_name, ' ', c.last_name) as customer_name,
         c.phone_number,
         i.shipping_address,
         i.total_amount,
-        i.invoice_code, -- Added this
+        i.invoice_code,
         COALESCE(
           json_agg(
             json_build_object(
@@ -126,7 +127,12 @@ exports.updateOrderStatus = async (req, res) => {
     const updatedOrder = rows[0];
 
     await client.query("COMMIT");
-
+    const pushPayload = {
+      title: `Your Order number ${updatedOrder.sales_order_id} Updated`,
+      body: `Your order status is now: ${updatedOrder.status}`,
+      url: "/orders",
+    };
+    sendPushToCustomer(updatedOrder.customer_id, pushPayload);
     req.io.emit("order_status_updated", {
       customerId: updatedOrder.customer_id,
       orderId: updatedOrder.sales_order_id,

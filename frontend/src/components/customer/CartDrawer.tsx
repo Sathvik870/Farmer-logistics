@@ -15,6 +15,8 @@ import LocationPicker from "./LocationPicker";
 import { useAlert } from "../../context/common/AlertContext";
 import api from "../../api";
 import { useProducts } from "../../context/customer/product/useProducts";
+import PaymentMethodSelector from "./PaymentMethodSelector";
+
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -69,6 +71,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const { location } = useLocation();
   const { showAlert } = useAlert();
   const { fetchProducts } = useProducts();
+  const [paymentMethod, setPaymentMethod] = useState("COD");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const isProceedDisabled = !location || !isCartValidForCheckout;
@@ -87,6 +90,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
         "/api/customer/orders",
         {
           cartItems: cartItems,
+          paymentMethod: paymentMethod,
           customer_details: {
             ...customer,
             delivery_charges: 50.0,
@@ -230,6 +234,10 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
               {cartItems.length > 0 && !isValidating && (
                 <footer className="flex-shrink-0 p-4 space-y-4 border-t border-gray-200 bg-white">
                   <BillSummary />
+                  <PaymentMethodSelector
+                    selectedMethod={paymentMethod}
+                    onSelectMethod={setPaymentMethod}
+                  />
                   <button
                     disabled={isProceedDisabled || isPlacingOrder}
                     onClick={handlePlaceOrder}

@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from "react";
-import { useSocket } from "../../context/common/socket/useSocket.ts";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
+import { AgGridReact } from "ag-grid-react";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import { useSocket } from "../../context/common/socket/useSocket";
 import api from "../../api";
-import { HiVolumeUp, HiVolumeOff, HiEye } from "react-icons/hi";
-import useSound from "use-sound";
-import notificationSound from "../../assets/sounds/notification.mp3";
-import { registerForPushNotifications } from "../../utils/pushManager";
+import { HiEye } from "react-icons/hi";
 import OrderItemsModal from "../../components/admin/OrderItemsModal";
 import { useAlert } from "../../context/common/AlertContext";
+import SalesOrderStatusRenderer from "../../components/admin/SalesOrderStatusRenderer";
+import { useNotification } from '../../context/admin/Notification/useNotification.ts';
 
-interface Order {
+export interface Order {
   sales_order_id: number;
   invoice_code: string;
   customer_name: string;
@@ -23,117 +30,90 @@ interface Order {
   isNew?: boolean;
 }
 
+const gridStyles = `
+  .custom-ag-theme .ag-header {
+    background-color: #387c40;
+    border-bottom: 2px solid #387c40;
+  }
+
+  .custom-ag-theme .ag-header-cell {
+    color: white;
+  }
+
+  .custom-ag-theme .ag-header-cell-label {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .custom-ag-theme .ag-header-icon {
+    color: white;
+  }
+  .custom-ag-theme .ag-header-icon {
+    color: white;
+  }
+`;
+
 const SalesOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-  const socket = useSocket();
   const { showAlert } = useAlert();
-  const [selectedOrderItems, setSelectedOrderItems] = useState<{
-    items: [];
-    id: number;
-  } | null>(null);
-  const [play] = useSound(notificationSound);
+  const socket = useSocket();
+  const { setHasNewOrder } = useNotification();
+  const [selectedOrderItems, setSelectedOrderItems] = useState<{items: []; id: number;} | null>(null);
+  const gridRef = useRef<AgGridReact<Order>>(null);
 
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
+  const fetchOrders = useCallback(async () => {
+    try {
+      const { data } = await api.get("/api/admin/sales-orders");
+      setOrders(data);
+    } catch (error) {
+      console.error("Failed to fetch orders", error);
     }
   }, []);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const { data } = await api.get("/api/admin/sales-orders");
-        setOrders(data);
-      } catch (error) {
-        console.error("Failed to fetch orders", error);
-      }
-    };
-    fetchOrders();
-  }, []);
-
-  const toggleNotifications = async () => {
-    if (!isSoundEnabled) {
-      const success = await registerForPushNotifications();
-      if (success) {
-        setIsSoundEnabled(true);
-      } else {
-        console.error("Push notification registration failed");
-      }
-    } else {
-      setIsSoundEnabled(false);
-    }
-  };
-
-  const handlePaymentStatusChange = async (
-    orderId: number,
-    newStatus: string
-  ) => {
-    
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
     const performUpdate = async () => {
       try {
-        await api.put(`/api/admin/sales-orders/${orderId}/payment-status`, {
-          payment_status: newStatus,
+        await api.put(`/api/admin/sales-orders/${orderId}/status`, {
+          status: newStatus,
         });
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.sales_order_id === orderId ? { ...o, payment_status: newStatus } : o
-          )
-        );
+        const rowNode = gridRef.current?.api.getRowNode(String(orderId));
+        if (rowNode && rowNode.data) {
+          rowNode.setData({ ...rowNode.data, delivery_status: newStatus });
+        }
       } catch (error: any) {
-        showAlert(error.response?.data?.message || "Failed to update payment status.", "error");
+        showAlert(
+          error.response?.data?.message || "Failed to update status.",
+          "error"
+        );
       }
     };
-    if (newStatus === 'Paid') {
-      showAlert(
-        "Are you sure you want to mark this order as Paid? This action cannot be easily undone.",
-        "warning",
-        performUpdate
-      );
+    if (newStatus === "Cancelled") {
+      showAlert("Cancel order and restock items?", "warning", performUpdate);
     } else {
       performUpdate();
     }
   };
 
   useEffect(() => {
+    setHasNewOrder(false);
+  }, [setHasNewOrder])
+  
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
     if (!socket) return;
 
     const handleNewOrder = (newOrder: Order) => {
-      setOrders((prevOrders) => {
-        const cleanOrders = prevOrders.map((o) => ({ ...o, isNew: false }));
-        return [{ ...newOrder, isNew: true }, ...cleanOrders];
+      gridRef.current?.api.applyTransactionAsync({
+        add: [{ ...newOrder, isNew: true }],
+        addIndex: 0,
       });
-
-      if (isSoundEnabled) {
-        play();
-
-        if ("Notification" in window && Notification.permission === "granted") {
-          try {
-            const notification = new Notification("New Order Received!", {
-              body: `Customer: ${newOrder.customer_name}\nAmount: ₹${newOrder.total_amount}`,
-              icon: "/logo_png.png",
-              requireInteraction: true,
-              silent: true,
-            });
-
-            notification.onclick = () => {
-              window.focus();
-              notification.close();
-            };
-          } catch (e) {
-            console.error("Notification failed", e);
-          }
-        }
-      }
-
       setTimeout(() => {
-        setOrders((currentOrders) =>
-          currentOrders.map((o) =>
-            o.sales_order_id === newOrder.sales_order_id
-              ? { ...o, isNew: false }
-              : o
-          )
-        );
+        gridRef.current?.api.applyTransactionAsync({
+          add: [{ ...newOrder, isNew: true }],
+          addIndex: 0,
+        });
       }, 60000);
     };
 
@@ -142,242 +122,149 @@ const SalesOrdersPage: React.FC = () => {
     return () => {
       socket.off("new_order", handleNewOrder);
     };
-  }, [socket, isSoundEnabled, play]);
+  }, [socket]);
 
-  const handleStatusChange = async (orderId: number, newStatus: string) => {
-    const performUpdate = async () => {
-      try {
-        await api.put(`/api/admin/sales-orders/${orderId}/status`, {
-          status: newStatus,
-        });
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.sales_order_id === orderId
-              ? { ...o, delivery_status: newStatus }
-              : o
-          )
-        );
-      } catch (error: any) {
-        showAlert(
-          error.response?.data?.message || "Failed to update status.",
-          "error"
-        );
-      }
-    };
+  const columnDefs = useMemo<ColDef<Order>[]>(
+    () => [
+      {
+        field: "invoice_code",
+        headerName: "Inv Code",
+        flex: 0.9,
+      },
+      {
+        field: "customer_name",
+        headerName: "Customer Name",
+        flex: 1.3,
+      },
+      {
+        field: "phone_number",
+        headerName: "Phone",
+        flex: 0.9,
+      },
+      {
+        field: "shipping_address",
+        headerName: "Address",
+        tooltipField: "shipping_address",
+        flex: 1,
+      },
+      {
+        headerName: "Items",
+        flex: 0.8,
+        cellStyle: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        },
 
-    if (newStatus === "Cancelled") {
-      showAlert(
-        "Are you sure you want to cancel this order? This will restore the items to stock.",
-        "warning",
-        performUpdate
-      );
-    } else {
-      performUpdate();
-    }
-  };
+        cellRenderer: (params: ICellRendererParams<Order>) => {
+          if (!params.data) return null;
+          const orderData = params.data;
+          return (
+            <button
+              onClick={() =>
+                setSelectedOrderItems({
+                  items: orderData.order_items,
+                  id: orderData.sales_order_id,
+                })
+              }
+              className="flex items-center gap-1 text-sm font-bold text-[#387c40] hover:text-[#144a31] bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors"
+            >
+              <HiEye /> {orderData.order_items?.length || 0} Items
+            </button>
+          );
+        },
+      },
+      {
+        field: "total_amount",
+        headerName: "Amount",
+        flex: 0.8,
+        valueFormatter: (p) => `₹${Number(p.value).toFixed(2)}`,
+      },
+      {
+        field: "payment_method",
+        headerName: "Payment Method",
+        flex: 1.2,
+        valueFormatter: ({ value }) =>
+          value === "COD" ? "Cash on Delivery" : value,
+      },
+      {
+        headerName: "Payment",
+        flex: 1,
+        cellRenderer: (params: ICellRendererParams<Order>) => {
+          if (!params.data) return null;
+          const { payment_status } = params.data;
+
+          const statusText = `${payment_status}`;
+          let colorClasses = "";
+          if (payment_status === "Paid") {
+            colorClasses = "bg-green-100 text-green-800";
+          } else if (payment_status === "Unpaid") {
+            colorClasses = "bg-red-100 text-red-800";
+          } else {
+            colorClasses = "bg-yellow-100 text-yellow-800";
+          }
+          return (
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}
+            >
+              {statusText}
+            </span>
+          );
+        },
+      },
+      {
+        field: "delivery_status",
+        headerName: "Order Status",
+        width: 160,
+        cellRenderer: SalesOrderStatusRenderer,
+        cellRendererParams: { onStatusChange: handleStatusChange },
+      },
+    ],
+    []
+  );
+
+  const getRowId = useCallback((params: any) => params.data.sales_order_id, []);
 
   return (
-    <div className="p-2">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Sales Orders</h1>
-        <button
-          onClick={toggleNotifications}
-          className={`p-3 rounded-full ${
-            isSoundEnabled ? "text-[#387c40]" : "text-red-600"
-          } transition-colors`}
-          title={isSoundEnabled ? "Mute Notifications" : "Enable Notifications"}
-        >
-          {isSoundEnabled ? (
-            <HiVolumeUp size={24} />
-          ) : (
-            <HiVolumeOff size={24} />
-          )}
-        </button>
-      </div>
+    <>
+      <style>{gridStyles}</style>
+      <div className="p-2">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Sales Orders</h1>
+        </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <table className="min-w-full text-left">
-          <thead className="bg-[#387c40]">
-            <tr>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Order ID
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Invoice
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Customer
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Phone
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Location
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Items
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Payment
-              </th>
-              <th className="px-6 py-3 text-sm font-bold text-white uppercase">
-                Order Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {orders.map((order) => (
-              <tr
-                key={order.sales_order_id}
-                className={`transition-colors duration-500 ${
-                  order.isNew
-                    ? "bg-yellow-100 animate-pulse-subtle"
-                    : "hover:bg-gray-50"
-                }`}
-              >
-                <td className="px-6 py-4 font-medium">
-                  {order.sales_order_id}
-                </td>
-                <td className="px-6 py-4 text-sm font-mono text-black">
-                  {order.invoice_code || "Pending"}
-                </td>
-                <td className="px-6 py-4">{order.customer_name}</td>
-                <td className="px-6 py-4 font-mono text-sm">
-                  {order.phone_number}
-                </td>
-                <td
-                  className="px-6 py-4 text-sm text-black truncate max-w-xs"
-                  title={order.shipping_address}
-                >
-                  {order.shipping_address || "N/A"}
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() =>
-                      setSelectedOrderItems({
-                        items: order.order_items,
-                        id: order.sales_order_id,
-                      })
-                    }
-                    className="flex items-center gap-1 text-sm font-bold text-[#387c40] hover:text-[#144a31] bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors"
-                  >
-                    <HiEye /> {order.order_items?.length || 0} Items
-                  </button>
-                </td>
-                <td className="px-6 py-4 font-bold text-green-600">
-                  ₹{Number(order.total_amount).toFixed(2)}
-                </td>
-                <td className="px-6 py-4">
-                  {order.payment_method === "COD" ? (
-                    <div className="relative inline-block w-full max-w-[100px]">
-                      <select
-                        disabled={order.payment_status === 'Paid'}
-                        value={order.payment_status}
-                        onChange={(e) =>
-                          handlePaymentStatusChange(
-                            order.sales_order_id,
-                            e.target.value
-                          )
-                        }
-                        className={`
-                          appearance-none w-full px-3 py-1.5 text-sm font-semibold border rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all
-                          disabled:cursor-not-allowed 
-                          ${
-                            order.payment_status === "Paid"
-                              ? "bg-green-100 text-green-800 border-green-200"
-                              : "bg-red-100 text-red-800 border-red-200"
-                          }
-                        `}
-                      >
-                        <option value="Unpaid">Pending</option>
-                        <option value="Paid">Paid</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg
-                          className="w-3 h-3 text-gray-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 9l-7 7-7-7"
-                          ></path>
-                        </svg>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      {order.payment_status === "Paid"
-                        ? "Paid (UPI)"
-                        : order.payment_status}
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="relative inline-block w-full max-w-[140px]">
-                    <select
-                      value={order.delivery_status || "Confirmed"}
-                      onChange={(e) =>
-                        handleStatusChange(order.sales_order_id, e.target.value)
-                      }
-                      disabled={
-                        order.delivery_status === "Cancelled" ||
-                        order.delivery_status === "Delivered"
-                      }
-                      className={`
-                          appearance-none w-full px-3 py-1.5 text-sm font-semibold border rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all
-                          ${
-                            order.delivery_status === "Delivered"
-                              ? "bg-green-50 border-green-200 text-green-700 focus:ring-green-500 disabled:cursor-not-allowed"
-                              : order.delivery_status === "Cancelled"
-                              ? "bg-red-50 border-red-200 text-red-700 focus:ring-red-500 disabled:cursor-not-allowed"
-                              : order.delivery_status === "In Transit"
-                              ? "bg-blue-50 border-blue-200 text-blue-700 focus:ring-blue-500"
-                              : "bg-yellow-50 border-yellow-200 text-yellow-700 focus:ring-yellow-500"
-                          }
-                        `}
-                    >
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Packing">Packing</option>
-                      <option value="In Transit">In Transit</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <svg
-                        className="w-4 h-4 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div
+          className="ag-theme-alpine custom-ag-theme"
+          style={{ height: 600, width: "100%" }}
+        >
+          <AgGridReact<Order>
+            ref={gridRef}
+            rowData={orders}
+            columnDefs={columnDefs}
+            defaultColDef={{
+              sortable: true,
+              filter: true,
+              resizable: true,
+              cellStyle: { fontWeight: 600 },
+            }}
+            getRowId={getRowId}
+            rowClassRules={{
+              "bg-yellow-10 astounding": (params) => !!params?.data?.isNew,
+            }}
+            pagination={true}
+            paginationPageSize={1000}
+            paginationPageSizeSelector={[1000, 2000, 5000]}
+          />
+        </div>
+
+        <OrderItemsModal
+          isOpen={!!selectedOrderItems}
+          onClose={() => setSelectedOrderItems(null)}
+          items={selectedOrderItems?.items || []}
+          orderId={selectedOrderItems?.id || 0}
+        />
       </div>
-      <OrderItemsModal
-        isOpen={!!selectedOrderItems}
-        onClose={() => setSelectedOrderItems(null)}
-        items={selectedOrderItems?.items || []}
-        orderId={selectedOrderItems?.id || 0}
-      />
-    </div>
+    </>
   );
 };
 

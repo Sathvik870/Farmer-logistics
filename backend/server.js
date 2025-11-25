@@ -15,12 +15,16 @@ const adminPurchaseRoutes = require("./src/routes/admin/purchase.routes");
 const adminStockRoutes = require("./src/routes/admin/stock.routes");
 const adminSalesOrderRoutes = require("./src/routes/admin/salesOrder.routes"); 
 const adminPushRoutes = require("./src/routes/admin/push.routes");
+const adminInvoiceRoutes = require("./src/routes/admin/invoice.routes");
 
 const customerAuthRoutes = require("./src/routes/customer/auth.routes");
 const customerUserRoutes = require("./src/routes/customer/user.routes");
 const customerOrderRoutes = require("./src/routes/customer/order.routes");
+const customerPushRoutes = require("./src/routes/customer/push.routes");
 
 const publicProductRoutes = require("./src/routes/public/product.routes");
+
+require('./src/jobs/updateInvoiceStatus.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -97,6 +101,7 @@ adminRouter.use("/purchase-orders", adminPurchaseRoutes);
 adminRouter.use("/stock", adminStockRoutes);
 adminRouter.use("/sales-orders", adminSalesOrderRoutes);
 adminRouter.use("/push", adminPushRoutes);
+adminRouter.use("/invoices", adminInvoiceRoutes); 
 
 app.use("/api/admin", adminRouter);
 
@@ -104,6 +109,7 @@ const customerRouter = express.Router();
 customerRouter.use("/auth", customerAuthRoutes);
 customerRouter.use("/users", customerUserRoutes);
 customerRouter.use("/orders", customerOrderRoutes); 
+customerRouter.use("/push", customerPushRoutes);
 
 app.use("/api/customer", customerRouter);
 

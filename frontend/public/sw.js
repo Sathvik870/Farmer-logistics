@@ -48,42 +48,14 @@ self.addEventListener("notificationclick", function (event) {
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      // If a window with the URL is already open, focus it.
       for (const client of clientList) {
         if (client.url.includes(urlToOpen) && "focus" in client) {
           return client.focus();
         }
       }
-      // Otherwise open a new window/tab.
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
     })
   );
 });
-
-// console.log("SW Loaded...");
-// self.addEventListener("push", function (event) {
-//   const data = event.data.json();
-  
-//   const options = {
-//     body: data.body,
-//     icon: "/logo_png.png",
-//     badge: "/logo_png.png",
-//     data: {
-//       url: data.url || "/"
-//     }
-//   };
-
-//   event.waitUntil(
-//     self.registration.showNotification(data.title, options)
-//   );
-// });
-
-// self.addEventListener("notificationclick", function (event) {
-//   event.notification.close();
-  
-//   event.waitUntil(
-//     clients.openWindow(event.notification.data.url)
-//   );
-// });

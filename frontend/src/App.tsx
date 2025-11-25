@@ -9,6 +9,8 @@ import { CategoryProvider } from "./context/customer/category/CategoryProvider";
 import { SearchProvider } from "./context/customer/search/SearchProvider";
 import { ProductProvider } from "./context/customer/product/ProductProvider";
 import { SocketProvider } from "./context/common/socket/SocketProvider";
+import { NotificationProvider } from "./context/admin/Notification/NotificationProvider";
+import { SettingsProvider } from "./context/admin/settings/SettingsProvider";
 
 import AdminLogin from "./pages/admin/AdminLoginPage";
 // import AdminSignup from "./pages/admin/AdminSignupPage";
@@ -16,6 +18,8 @@ import Dashboard from "./pages/admin/Dashboard";
 import ProductsPage from "./pages/admin/ProductsPage";
 import PurchaseOrdersPage from "./pages/admin/PurchaseOrdersPage";
 import SalesOrdersPage from "./pages/admin/SalesOrdersPage";
+import InvoicesPage from "./pages/admin/InvoicesPage";
+import SettingsPage from "./pages/admin/SettingsPage";
 
 import LoginPage from "./pages/customer/CustomerLoginPage";
 import SignupPage from "./pages/customer/CustomerSignupPage";
@@ -59,7 +63,15 @@ function App() {
 
                           {/* ProtectedRoutes */}
                           <Route element={<AdminProtectedRoute />}>
-                            <Route element={<MainLayout />}>
+                            <Route
+                              element={
+                                <NotificationProvider>
+                                  <SettingsProvider>
+                                    <MainLayout />
+                                  </SettingsProvider>
+                                </NotificationProvider>
+                              }
+                            >
                               <Route
                                 path="/admin/dashboard"
                                 element={<Dashboard />}
@@ -75,6 +87,14 @@ function App() {
                               <Route
                                 path="/admin/sales-orders"
                                 element={<SalesOrdersPage />}
+                              />
+                              <Route
+                                path="/admin/invoices"
+                                element={<InvoicesPage />}
+                              />
+                              <Route
+                                path="/admin/settings"
+                                element={<SettingsPage />}
                               />
                             </Route>
                           </Route>

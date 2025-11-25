@@ -6,18 +6,17 @@ import CartDrawer from "../../components/customer/CartDrawer";
 import GuestLoginModal from "../../components/customer/GuestLoginModal";
 import { useCustomerAuth } from "../../context/customer/auth/useCustomerAuth";
 import { useSocket } from "../../context/common/socket/useSocket";
-import useSound from "use-sound";
-import notificationSound from "../../assets/sounds/notification.mp3";
 
 const CustomerLayout: React.FC = () => {
-  const { isAuthenticated,customer } = useCustomerAuth();
+  const { isAuthenticated, customer } = useCustomerAuth();
   const socket = useSocket();
-  const [play] = useSound(notificationSound);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
   const routeLocation = useLocation();
   const pagesWithoutCategoryBar = ["/profile", "/orders", "/cart"];
-  const isShoppingPage = !pagesWithoutCategoryBar.some(path => routeLocation.pathname.startsWith(path));
+  const isShoppingPage = !pagesWithoutCategoryBar.some((path) =>
+    routeLocation.pathname.startsWith(path)
+  );
   const handleCartClick = () => {
     if (isAuthenticated) {
       setIsCartOpen(true);
@@ -26,39 +25,44 @@ const CustomerLayout: React.FC = () => {
     }
   };
   useEffect(() => {
-    // 1. Request permission on load
     if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
+      Notification.requestPermission();
     }
-    
+
     if (!socket || !isAuthenticated || !customer) return;
 
     const handleStatusUpdate = (data: any) => {
-        if (data.customerId === customer.customer_id) {
-            play();
-            if (Notification.permission === "granted") {
-                new Notification(`Order #${data.orderId} Updated`, {
-                    body: `Your order is now ${data.status}!`,
-                    icon: '/logo_png.png' 
-                });
-            } else {
-                alert(`Update: Your order #${data.orderId} is now ${data.status}`);
-            }
+      if (data.customerId === customer.customer_id) {
+        if (Notification.permission === "granted") {
+          new Notification(`Order number ${data.orderId} Updated`, {
+            body: `Your order is now ${data.status}!`,
+            icon: "/logo_png.png",
+          });
+        } else {
+          alert(
+            `Update: Your order number${data.orderId} is now ${data.status}`
+          );
         }
+      }
     };
 
     socket.on("order_status_updated", handleStatusUpdate);
 
     return () => {
-        socket.off("order_status_updated", handleStatusUpdate);
+      socket.off("order_status_updated", handleStatusUpdate);
     };
-  }, [socket, isAuthenticated, customer, play]);
+  }, [socket, isAuthenticated, customer]);
+
   const closeCart = () => setIsCartOpen(false);
   const closeGuestModal = () => setIsGuestModalOpen(false);
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar onCartClick={handleCartClick} />
-      <main className={`container mx-auto px-4 py-8 ${isShoppingPage ? 'pt-4' : 'pt-8'}`}>
+      <main
+        className={`container mx-auto px-4 py-8 ${
+          isShoppingPage ? "pt-4" : "pt-8"
+        }`}
+      >
         <Outlet />
       </main>
       <FloatingCartButton onCartClick={handleCartClick} />

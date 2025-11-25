@@ -5,6 +5,10 @@ import { useAlert } from "../../context/common/AlertContext";
 import { useDebounce } from "use-debounce";
 import api from "../../api";
 import {
+  registerForPushNotifications,
+  unsubscribeFromPushNotifications,
+} from "../../utils/pushManager";
+import {
   HiCheckCircle,
   HiExclamation,
   HiOutlineRefresh,
@@ -29,7 +33,8 @@ const FormField = ({
 const ProfilePage: React.FC = () => {
   const { customer, login } = useCustomerAuth();
   const { showAlert } = useAlert();
-
+  const [isPushEnabled, setIsPushEnabled] = useState(false);
+  const [isPushLoading, setIsPushLoading] = useState(true);
   const [formData, setFormData] = useState<any>({});
   const [initialData, setInitialData] = useState<any>({});
   const [isEditing, setIsEditing] = useState(false);
@@ -57,6 +62,18 @@ const ProfilePage: React.FC = () => {
       setInitialData(profileData);
     }
   }, [customer]);
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        setIsPushEnabled(!!subscription);
+      }
+      setIsPushLoading(false);
+    };
+    checkSubscription();
+  }, []);
 
   useEffect(() => {
     if (
@@ -89,6 +106,34 @@ const ProfilePage: React.FC = () => {
     >
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePushToggle = async () => {
+    setIsPushLoading(true);
+    if (isPushEnabled) {
+      const success = await unsubscribeFromPushNotifications();
+      if (success) {
+        showAlert("Push notifications disabled.", "success");
+        setIsPushEnabled(false);
+      } else {
+        showAlert(
+          "Failed to disable notifications. Please try again.",
+          "error"
+        );
+      }
+    } else {
+      const success = await registerForPushNotifications("customer");
+      if (success) {
+        showAlert("Push notifications enabled!", "success");
+        setIsPushEnabled(true);
+      } else {
+        showAlert(
+          "Failed to enable notifications. You may need to grant permission.",
+          "error"
+        );
+      }
+    }
+    setIsPushLoading(false);
   };
 
   const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData);
@@ -143,7 +188,6 @@ const ProfilePage: React.FC = () => {
           </Link>
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
-
           </div>
           {!isEditing && (
             <button
@@ -329,6 +373,35 @@ const ProfilePage: React.FC = () => {
                   }`}
                 />
               </FormField>
+            </div>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">
+              Notifications
+            </h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-gray-800">
+                  Order Status Updates
+                </p>
+                <p className="text-sm text-gray-500">
+                  Receive alerts even when the app is in the background.
+                </p>
+              </div>
+              <button
+                onClick={handlePushToggle}
+                disabled={isPushLoading}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 ${
+                  isPushEnabled ? "bg-green-600" : "bg-gray-300"
+                }`}
+              >
+                <span className="sr-only">Toggle Push Notifications</span>
+                <span
+                  className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ${
+                    isPushEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
           </section>
         </div>

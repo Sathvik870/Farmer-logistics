@@ -4,30 +4,29 @@ import { useAdminAuth } from "../../context/admin/auth/useAdminAuth";
 import userAvatar from "../../assets/admin-user.svg";
 import {
   HiOutlineHome,
-  // HiOutlineUsers,
   HiOutlineCalendar,
-  // HiOutlineBriefcase,
   HiOutlineCog,
   HiOutlineLogout,
   HiOutlineShoppingBag,
-  // HiOutlineSwitchHorizontal,
-  HiOutlineTruck, 
+  HiOutlineDocumentText,
+  HiOutlineTruck,
 } from "react-icons/hi";
+import { useNotification } from "../../context/admin/Notification/useNotification.ts";
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
 const mainLinks = [
-  { 
-    name: "Dashboard", 
-    path: "/admin/dashboard", 
-    icon: HiOutlineHome 
+  {
+    name: "Dashboard",
+    path: "/admin/dashboard",
+    icon: HiOutlineHome,
   },
-  { 
-    name: "Products", 
-    path: "/admin/products", 
-    icon: HiOutlineShoppingBag 
+  {
+    name: "Products",
+    path: "/admin/products",
+    icon: HiOutlineShoppingBag,
   },
   {
     name: "Purchase orders",
@@ -39,33 +38,26 @@ const mainLinks = [
     path: "/admin/sales-orders",
     icon: HiOutlineTruck,
   },
-  // {
-  //   name: "Sales Allocation",
-  //   path: "/sales-allocation",
-  //   icon: HiOutlineSwitchHorizontal,
-  // },
-  // { 
-  //   name: "Sales orders", 
-  //   path: "/sales-orders", 
-  //   icon: HiOutlineBriefcase 
-  // },
-  // { 
-  //   name: "Customers", 
-  //   path: "/customers", 
-  //   icon: HiOutlineUsers 
-  // },
-];
-
-const secondaryLinks = [
-  { 
-    name: "Settings", 
-    path: "/admin/settings", 
-    icon: HiOutlineCog 
+  {
+    name: "Invoices",
+    path: "/admin/invoices",
+    icon: HiOutlineDocumentText,
   },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+const secondaryLinks = [
+  {
+    name: "Settings",
+    path: "/admin/settings",
+    icon: HiOutlineCog,
+  },
+];
+
+const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+}) => {
   const { admin, logout } = useAdminAuth();
+  const { hasNewOrder } = useNotification();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -117,6 +109,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 >
                   {link.name}
                 </span>
+                {link.name === "Sales Orders" && hasNewOrder && !isActive && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+                )}
               </>
             )}
           </NavLink>

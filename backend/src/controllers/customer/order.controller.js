@@ -4,37 +4,42 @@ const { convertToBaseUnit } = require("../../utils/customer/unitConverter");
 const { createInvoicePDF } = require("../../utils/common/invoiceGenerator");
 const numberToWords = require("number-to-words");
 const { format } = require("date-fns");
-const { sendPushToAdmins } = require("../../utils/admin/pushNotification");
+const { sendPushToAdmins } = require("../../utils/common/pushService");
 
 exports.placeOrder = async (req, res) => {
   const customer_id = req.customer.customer_id;
-  const { cartItems, paymentMethod, customer_details } = req.body;
+  const { cartItems, customer_details, paymentMethod } = req.body;
   const deliveryCharges = req.body.customer_details.delivery_charges || 0;
+
+  if( paymentMethod !== "COD" && paymentMethod !== "UPI" ) {
+    return res.status(400).json({ message: "Invalid payment method." });
+  }
+  
   if (!cartItems || cartItems.length === 0) {
     return res.status(400).json({ message: "Cart is empty." });
   }
+
   const client = await db.connect();
   logger.info(
     `[ORDER] Starting order placement for customer ID: ${customer_id}`
   );
 
-  let newOrder;
-
   try {
     await client.query("BEGIN");
+
     const orderQuery = `
       INSERT INTO sales_orders (customer_id, payment_method, status)
       VALUES ($1, $2, 'Confirmed')
       RETURNING sales_order_id, order_date;
     `;
+
     const orderResult = await client.query(orderQuery, [
       customer_id,
-      paymentMethod || "COD",
+      paymentMethod,
     ]);
 
-    newOrder = orderResult.rows[0];
-
-    const { sales_order_id } = orderResult.rows[0];
+    const newOrder = orderResult.rows[0];
+    const { sales_order_id } = newOrder;
 
     logger.info(`[ORDER] Created sales_order with ID: ${sales_order_id}`);
 
@@ -98,16 +103,18 @@ exports.placeOrder = async (req, res) => {
 
     subtotal = parseFloat(subtotal.toFixed(2));
     const totalAmount = subtotal + deliveryCharges;
+
+    const initialInvoiceStatus = paymentMethod === "COD" ? "Upcoming" : "Paid";
+    const initialAmountPaid = paymentMethod === "COD" ? 0 : totalAmount;
     logger.info(
       `[INVOICE] Creating invoice record for sales_order ID: ${sales_order_id}`
     );
+
     const invoiceInsertQuery = `
-      INSERT INTO invoices (sales_order_id, customer_id, subtotal, delivery_charges, total_amount, shipping_address)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO invoices (sales_order_id, customer_id, subtotal, delivery_charges, total_amount, shipping_address, due_date, invoice_status, amount_paid)
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE + INTERVAL '5 days', $7, $8)
       RETURNING invoice_id, invoice_code, invoice_date;
     `;
-
-    console.log("customer_details.address:", customer_details.address);
 
     const invoiceResult = await client.query(invoiceInsertQuery, [
       sales_order_id,
@@ -116,6 +123,8 @@ exports.placeOrder = async (req, res) => {
       deliveryCharges,
       totalAmount,
       customer_details.address,
+      initialInvoiceStatus,
+      initialAmountPaid,
     ]);
 
     const newInvoice = invoiceResult.rows[0];
@@ -158,7 +167,7 @@ exports.placeOrder = async (req, res) => {
 
     const pushPayload = {
       title: "New Order Received!",
-      body: `Order #${newInvoice.invoice_code} from ${customer_details.first_name}`,
+      body: `Order number ${newInvoice.invoice_code} from ${customer_details.first_name}`,
       url: "/admin/sales-orders",
     };
     sendPushToAdmins(pushPayload);
@@ -170,8 +179,8 @@ exports.placeOrder = async (req, res) => {
       phone_number: customer_details.phone_number,
       total_amount: totalAmount,
       delivery_status: "Confirmed",
-      payment_status: paymentMethod || "COD" ? "Pending" : "Paid",
-      payment_method: paymentMethod || "COD",
+      payment_status: paymentMethod === "COD" ? "Unpaid" : "Paid",
+      payment_method: paymentMethod,
       order_date: new Date().toISOString(),
       shipping_address: customer_details.address,
 

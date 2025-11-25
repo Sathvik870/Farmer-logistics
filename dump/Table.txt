@@ -130,9 +130,12 @@ CREATE TABLE invoices (
     sales_order_id integer NOT NULL,
     customer_id integer NOT NULL,
     invoice_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    DUE_DATE timestamp without time zone;
     subtotal numeric(12,2) NOT NULL,
     delivery_charges numeric(12,2) DEFAULT 0,
     total_amount numeric(12,2) NOT NULL,
+    amount_paid NUMERIC(10,2) DEFAULT 0,
+    INVOICE_STATUS VARCHAR(30) SET DEFAULT 'Upcoming';
     shipping_address VARCHAR(255);
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT invoices_sales_order_id_fkey FOREIGN KEY (sales_order_id) REFERENCES sales_orders(sales_order_id) ON DELETE CASCADE,
@@ -242,4 +245,17 @@ CREATE TABLE admin_subscriptions (
     keys JSONB NOT NULL, -- Stores p256dh and auth
     user_agent VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE customer_subscriptions (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    endpoint TEXT NOT NULL,
+    keys JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_customer
+        FOREIGN KEY(customer_id) 
+        REFERENCES customers(customer_id)
+        ON DELETE CASCADE,
+    UNIQUE (endpoint) -- Don't store the same device twice
 );

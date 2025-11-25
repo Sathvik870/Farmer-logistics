@@ -17,7 +17,7 @@ const transports = [
     datePattern: "YYYY-MM-DD",
     zippedArchive: true,
     maxSize: "20m",
-    maxFiles: "10d",
+    maxFiles: "2d",
     format: winston.format.printf(
       (info) => `[${info.level.toUpperCase()}]: ${info.message}`
     ),
@@ -29,7 +29,7 @@ const transports = [
     datePattern: "YYYY-MM-DD",
     zippedArchive: true,
     maxSize: "20m",
-    maxFiles: "10d",
+    maxFiles: "2d",
     format: winston.format.printf(
       (info) => `[${info.level.toUpperCase()}]: ${info.message}`
     ),

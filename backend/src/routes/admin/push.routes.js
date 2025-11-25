@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { subscribeAdmin } = require("../../utils/admin/pushNotification");
+const { subscribeAdmin } = require("../../utils/common/pushService");
 const { protect } = require("../../middleware/adminAuth.middleware");
 
 router.post("/subscribe", protect, async (req, res) => {

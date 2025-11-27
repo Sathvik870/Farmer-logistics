@@ -13,7 +13,7 @@ import { HiEye } from "react-icons/hi";
 import OrderItemsModal from "../../components/admin/OrderItemsModal";
 import { useAlert } from "../../context/common/AlertContext";
 import SalesOrderStatusRenderer from "../../components/admin/SalesOrderStatusRenderer";
-import { useNotification } from '../../context/admin/Notification/useNotification.ts';
+import { useNotification } from "../../context/admin/Notification/useNotification.ts";
 
 export interface Order {
   sales_order_id: number;
@@ -31,6 +31,18 @@ export interface Order {
 }
 
 const gridStyles = `
+  .ag-cell.new-invoice-highlight {
+    background-color: #fecaca; /* A light red color */
+    font-weight: bold;
+    color: #b91c1c; /* Darker red text */
+    animation: pulse-bg 2s infinite;
+  }
+
+  @keyframes pulse-bg {
+    0% { background-color: #fecaca; }
+    50% { background-color: #fee2e2; }
+    100% { background-color: #fecaca; }
+  }
   .custom-ag-theme .ag-header {
     background-color: #387c40;
     border-bottom: 2px solid #387c40;
@@ -57,7 +69,10 @@ const SalesOrdersPage: React.FC = () => {
   const { showAlert } = useAlert();
   const socket = useSocket();
   const { setHasNewOrder } = useNotification();
-  const [selectedOrderItems, setSelectedOrderItems] = useState<{items: []; id: number;} | null>(null);
+  const [selectedOrderItems, setSelectedOrderItems] = useState<{
+    items: [];
+    id: number;
+  } | null>(null);
   const gridRef = useRef<AgGridReact<Order>>(null);
 
   const fetchOrders = useCallback(async () => {
@@ -95,8 +110,8 @@ const SalesOrdersPage: React.FC = () => {
 
   useEffect(() => {
     setHasNewOrder(false);
-  }, [setHasNewOrder])
-  
+  }, [setHasNewOrder]);
+
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
@@ -109,12 +124,6 @@ const SalesOrdersPage: React.FC = () => {
         add: [{ ...newOrder, isNew: true }],
         addIndex: 0,
       });
-      setTimeout(() => {
-        gridRef.current?.api.applyTransactionAsync({
-          add: [{ ...newOrder, isNew: true }],
-          addIndex: 0,
-        });
-      }, 60000);
     };
 
     socket.on("new_order", handleNewOrder);
@@ -124,12 +133,29 @@ const SalesOrdersPage: React.FC = () => {
     };
   }, [socket]);
 
+  const handleViewItems = (orderData: Order) => {
+    setSelectedOrderItems({
+      items: orderData.order_items,
+      id: orderData.sales_order_id,
+    });
+    const rowNode = gridRef.current?.api.getRowNode(
+      String(orderData.sales_order_id)
+    );
+
+    if (rowNode && rowNode?.data?.isNew) {
+      rowNode.setData({ ...rowNode.data, isNew: false });
+    }
+  };
+
   const columnDefs = useMemo<ColDef<Order>[]>(
     () => [
       {
         field: "invoice_code",
         headerName: "Inv Code",
         flex: 0.9,
+        cellClassRules: {
+          'new-invoice-highlight': (params) => !!params.data?.isNew,
+        },
       },
       {
         field: "customer_name",
@@ -158,18 +184,12 @@ const SalesOrdersPage: React.FC = () => {
 
         cellRenderer: (params: ICellRendererParams<Order>) => {
           if (!params.data) return null;
-          const orderData = params.data;
           return (
             <button
-              onClick={() =>
-                setSelectedOrderItems({
-                  items: orderData.order_items,
-                  id: orderData.sales_order_id,
-                })
-              }
+              onClick={() => handleViewItems(params.data!)}
               className="flex items-center gap-1 text-sm font-bold text-[#387c40] hover:text-[#144a31] bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors"
             >
-              <HiEye /> {orderData.order_items?.length || 0} Items
+              <HiEye /> {params.data.order_items?.length || 0} Items
             </button>
           );
         },
@@ -248,9 +268,6 @@ const SalesOrdersPage: React.FC = () => {
               cellStyle: { fontWeight: 600 },
             }}
             getRowId={getRowId}
-            rowClassRules={{
-              "bg-yellow-10 astounding": (params) => !!params?.data?.isNew,
-            }}
             pagination={true}
             paginationPageSize={1000}
             paginationPageSizeSelector={[1000, 2000, 5000]}

@@ -189,6 +189,7 @@ exports.placeOrder = async (req, res) => {
         quantity: item.quantity,
         unit_type: item.unit_type,
         selling_unit: item.selling_unit,
+        sell_per_unit_qty: item.sell_per_unit_qty,
         price: item.selling_price,
       })),
     };
@@ -273,8 +274,8 @@ exports.getInvoicesForDate = async (req, res) => {
               i.invoice_code, 
               i.total_amount, 
               i.invoice_date,
-              so.sales_order_id, -- Needed for cancel API
-              so.status          -- Needed for UI logic
+              so.sales_order_id,
+              so.status
             FROM invoices i
             JOIN sales_orders so ON i.sales_order_id = so.sales_order_id
             WHERE i.customer_id = $1 AND DATE(i.invoice_date) = $2
@@ -304,13 +305,27 @@ exports.getInvoicePDF = async (req, res) => {
   try {
     const query = `
       SELECT
-        i.invoice_id, i.invoice_code, i.invoice_date, i.subtotal, 
-        i.delivery_charges, i.total_amount,
-        so.sales_order_id, so.order_date, so.status,
-        c.first_name, c.last_name, c.email, c.phone_number, 
-        c.address, c.city, c.state,
-        p.product_name, p.sell_per_unit_qty, p.selling_unit,
-        soi.sold_quantity, soi.sold_price
+        i.invoice_id, 
+        i.invoice_code, 
+        i.invoice_date, 
+        i.subtotal, 
+        i.delivery_charges, 
+        i.total_amount,
+        so.sales_order_id, 
+        so.order_date, 
+        so.status,
+        c.first_name, 
+        c.last_name, 
+        c.email, 
+        c.phone_number, 
+        c.address, 
+        c.city, 
+        c.state,
+        p.product_name, 
+        p.sell_per_unit_qty, 
+        p.selling_unit,
+        soi.sold_quantity, 
+        soi.sold_price
       FROM invoices i
       JOIN sales_orders so ON i.sales_order_id = so.sales_order_id
       JOIN customers c ON i.customer_id = c.customer_id

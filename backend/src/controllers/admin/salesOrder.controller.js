@@ -24,8 +24,9 @@ exports.getAllSalesOrders = async (req, res) => {
             json_build_object(
               'product_name', p.product_name,
               'quantity', soi.sold_quantity,
-              'unit_type', p.unit_type,
-              'selling_unit', p.selling_unit,
+              'unit_type', p.unit_type,     
+              'selling_unit', p.selling_unit, 
+              'sell_per_unit_qty', p.sell_per_unit_qty, 
               'price', soi.sold_price
             )
           ) FILTER (WHERE soi.item_id IS NOT NULL), '[]'

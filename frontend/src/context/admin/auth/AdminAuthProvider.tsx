@@ -17,7 +17,6 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
           setAdmin(response.data);
         } catch (error) {
           console.error("Failed to fetch admin profile", error);
-          localStorage.removeItem("adminAuthToken");
           setAdmin(null);
         }
       }

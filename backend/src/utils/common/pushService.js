@@ -97,3 +97,14 @@ exports.unsubscribeCustomer = async (subscription) => {
     logger.error(`[PUSH] Failed to remove customer subscription: ${error.message}`);
   }
 };
+
+exports.unsubscribeAdmin = async (subscription) => {
+  try {
+    const query = `DELETE FROM admin_subscriptions WHERE endpoint = $1;`; 
+    await db.query(query, [subscription.endpoint]);
+    logger.info("[PUSH] Removed admin subscription.");
+  }
+  catch (error) {
+    logger.error(`[PUSH] Failed to remove admin subscription: ${error.message}`);
+  }
+};

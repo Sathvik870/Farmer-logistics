@@ -201,8 +201,8 @@ const InvoicesPage: React.FC = () => {
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           pagination={true}
-          paginationPageSize={15}
-          paginationPageSizeSelector={[15, 20, 50, 100]}
+          paginationPageSize={500}
+          paginationPageSizeSelector={[500,1000,1500]}
         />
       </div>
 

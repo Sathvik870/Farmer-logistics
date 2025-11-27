@@ -111,7 +111,7 @@ const ProfilePage: React.FC = () => {
   const handlePushToggle = async () => {
     setIsPushLoading(true);
     if (isPushEnabled) {
-      const success = await unsubscribeFromPushNotifications();
+      const success = await unsubscribeFromPushNotifications('customer');
       if (success) {
         showAlert("Push notifications disabled.", "success");
         setIsPushEnabled(false);

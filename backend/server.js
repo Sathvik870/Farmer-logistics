@@ -16,6 +16,7 @@ const adminStockRoutes = require("./src/routes/admin/stock.routes");
 const adminSalesOrderRoutes = require("./src/routes/admin/salesOrder.routes"); 
 const adminPushRoutes = require("./src/routes/admin/push.routes");
 const adminInvoiceRoutes = require("./src/routes/admin/invoice.routes");
+const adminDashboardRoutes = require("./src/routes/admin/dashboard.routes");
 
 const customerAuthRoutes = require("./src/routes/customer/auth.routes");
 const customerUserRoutes = require("./src/routes/customer/user.routes");
@@ -102,6 +103,7 @@ adminRouter.use("/stock", adminStockRoutes);
 adminRouter.use("/sales-orders", adminSalesOrderRoutes);
 adminRouter.use("/push", adminPushRoutes);
 adminRouter.use("/invoices", adminInvoiceRoutes); 
+adminRouter.use("/dashboard", adminDashboardRoutes);
 
 app.use("/api/admin", adminRouter);
 

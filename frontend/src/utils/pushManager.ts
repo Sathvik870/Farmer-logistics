@@ -37,8 +37,7 @@ export const registerForPushNotifications = async (
         ? "/api/admin/push/subscribe"
         : "/api/customer/push/subscribe";
 
-    const subscribe = await api.post(subscribeUrl, subscription);
-    console.log("Push Registered:", subscribe);
+    await api.post(subscribeUrl, subscription);
     return true;
   } catch (error) {
     console.error("Push Registration Failed:", error);
@@ -46,22 +45,27 @@ export const registerForPushNotifications = async (
   }
 };
 
-export const unsubscribeFromPushNotifications = async () => {
-  if (!('serviceWorker' in navigator)) return false;
+export const unsubscribeFromPushNotifications = async (
+  userType: "admin" | "customer"
+) => {
+  if (!("serviceWorker" in navigator)) return false;
 
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
 
     if (subscription) {
-      await api.post('/api/customer/push/unsubscribe', subscription);
+      const unsubscribeUrl =
+        userType === "admin"
+          ? "/api/admin/push/unsubscribe"
+          : "/api/customer/push/unsubscribe";
+      await api.post(unsubscribeUrl, subscription);
       await subscription.unsubscribe();
-      console.log('Push Unsubscribed');
       return true;
     }
     return false;
   } catch (error) {
-    console.error('Push Unsubscription Failed:', error);
+    console.error(`Push Unsubscription Failed for ${userType}:`, error);
     return false;
   }
 };

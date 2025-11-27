@@ -16,38 +16,68 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onSaveSuccess,
   invoice,
 }) => {
-  const amountDue = useMemo(() => {
-    if (!invoice) return 0;
-    console.log(invoice);
-    return parseFloat(invoice.total_amount) - parseFloat(invoice.amount_paid);
+
+  const { amountDue, totalAmount } = useMemo(() => {
+    if (!invoice) return { amountDue: 0, totalAmount: 0 };
+    const total = parseFloat(invoice.total_amount) || 0;
+    const paid = parseFloat(invoice.amount_paid) || 0;
+    return {
+      amountDue: parseFloat((total - paid).toFixed(2)),
+      totalAmount: total,
+    };
   }, [invoice]);
 
-  const [amountPaidNow, setAmountPaidNow] = useState("0");
+  const [amountPaidNow, setAmountPaidNow] = useState("");
 
   useEffect(() => {
-    if (invoice) {
-      setAmountPaidNow(amountDue.toFixed(2));
+    if (isOpen && invoice) {
+      setAmountPaidNow(amountDue > 0 ? amountDue.toFixed(2) : "");
     }
-  }, [invoice, amountDue]);
+  }, [isOpen, invoice, amountDue]);
+
+  useEffect(() => {
+    if (isOpen && invoice) {
+      setAmountPaidNow(amountDue > 0 ? amountDue.toFixed(2) : '');
+    }
+  }, [isOpen, invoice, amountDue]);
+
 
   const { showAlert } = useAlert();
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    if (value === '' || value === '.') {
+        setAmountPaidNow(value);
+        return;
+    }
+
+    const numericValue = parseFloat(value);
+    
+    if (isNaN(numericValue) || numericValue < 0) {
+        return;
+    }
+    
+    if (numericValue > amountDue) {
+        setAmountPaidNow(amountDue.toFixed(2));
+    } else {
+        setAmountPaidNow(value);
+    }
+  };
+
+  const numericAmountPaidNow = parseFloat(amountPaidNow);
+  const isSaveDisabled =
+    isNaN(numericAmountPaidNow) ||
+    numericAmountPaidNow <= 0 ||
+    numericAmountPaidNow > amountDue;
 
   if (!isOpen || !invoice) return null;
 
   const handleSubmit = async () => {
-    const numericAmount = parseFloat(amountPaidNow);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      showAlert("Please enter a valid positive amount.", "error");
-      return;
-    }
-    if (numericAmount > amountDue) {
-      showAlert("Payment cannot exceed the amount due.", "error");
-      return;
-    }
-
+    if (isSaveDisabled) return;
     try {
       await api.put(`/api/admin/invoices/${invoice.invoice_id}/payment`, {
-        amount_paid_now: numericAmount,
+        amount_paid_now: numericAmountPaidNow,
       });
       showAlert("Payment updated successfully!", "success");
       onSaveSuccess();
@@ -61,9 +91,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#ffffff45]">
-      <div className="bg-[white] rounded-lg shadow-xl w-full max-w-md">
-        <div className="bg-[#387c40] p-4 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#ffffffe8]">
+      <div className="bg-gray-50 rounded-lg shadow-xl w-full max-w-md">
+        <div className="bg-[#387c40] p-4 flex justify-between items-center rounded-t-lg">
           <h3 className="text-lg text-white font-bold">
             Record Payment for {invoice.invoice_code}
           </h3>
@@ -74,8 +104,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-lg font-medium text-black">
-              Total Invoice Amount : ₹
-              {parseFloat(invoice.total_amount).toFixed(2)}
+              Total Invoice Amount : ₹{totalAmount}
             </label>
           </div>
           {amountDue !== 0 && (
@@ -85,30 +114,36 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </label>
             </div>
           )}
-          <hr />
           <div>
-            <label className="block text-sm font-medium">
-              Amount Received Now
+            <label className="block text-lg font-medium">
+              Enter the amount
             </label>
             <input
               type="number"
               value={amountPaidNow}
-              onChange={(e) => setAmountPaidNow(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md mt-1 focus:ring-2 focus:ring-green-500"
-              placeholder="Enter amount"
+              onChange={handleAmountChange}
+              placeholder="0.00"
+              className="w-full text-lg bg-transparent border-b-2 border-gray-300  pt-2 text-black focus:outline-none focus:border-[#144a31] transition-colors duration-1000 ease-in-out"
             />
           </div>
         </div>
-        <div className="p-4 bg-gray-50 border-t flex justify-end gap-4">
+        <div className="p-4 bg-white border-t-2 border-gray-200 flex justify-end gap-4 rounded-b-lg">
           <button
+            className="flex-1 sm:flex-none text-base cursor-pointer font-semibold bg-gray-200 text-gray-700 px-7 py-3 rounded-full hover:bg-gray-300 duration-200"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded-lg font-semibold"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold"
+            disabled={isSaveDisabled}
+            className={`flex gap-3 text-base font-semibold px-7 py-3 rounded-full border justify-center items-center transition-all duration-200
+              ${
+                !isSaveDisabled
+                  ? "bg-gradient-to-r from-[#144a31] to-[#387c40] text-white border-[#144a31] hover:scale-105 cursor-pointer"
+                  : "bg-[#618172] text-white cursor-not-allowed"
+              }
+            `}
           >
             Save Payment
           </button>

@@ -18,7 +18,6 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
           setCustomer(response.data);
         } catch (error) {
           console.error("Failed to fetch customer profile", error);
-          localStorage.removeItem("customerAuthToken");
           setCustomer(null);
         }
       }

@@ -34,7 +34,7 @@ const ProfilePage: React.FC = () => {
   const { customer, login } = useCustomerAuth();
   const { showAlert } = useAlert();
   const [isPushEnabled, setIsPushEnabled] = useState(false);
-  const [isPushLoading, setIsPushLoading] = useState(true);
+  const [isPushLoading, setIsPushLoading] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [initialData, setInitialData] = useState<any>({});
   const [isEditing, setIsEditing] = useState(false);
@@ -113,24 +113,17 @@ const ProfilePage: React.FC = () => {
     if (isPushEnabled) {
       const success = await unsubscribeFromPushNotifications('customer');
       if (success) {
-        showAlert("Push notifications disabled.", "success");
         setIsPushEnabled(false);
       } else {
-        showAlert(
-          "Failed to disable notifications. Please try again.",
-          "error"
-        );
+        console.error("Failed to disable push notifications.");
       }
     } else {
       const success = await registerForPushNotifications("customer");
       if (success) {
-        showAlert("Push notifications enabled!", "success");
+        console.log("Push notifications enabled.");
         setIsPushEnabled(true);
       } else {
-        showAlert(
-          "Failed to enable notifications. You may need to grant permission.",
-          "error"
-        );
+        console.error("Failed to enable push notifications.");
       }
     }
     setIsPushLoading(false);

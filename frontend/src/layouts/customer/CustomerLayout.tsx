@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "../../components/customer/Navbar";
 import FloatingCartButton from "../../components/customer/FloatingCartButton";
@@ -15,6 +15,12 @@ const CustomerLayout: React.FC = () => {
   const isShoppingPage = !pagesWithoutCategoryBar.some((path) =>
     routeLocation.pathname.startsWith(path)
   );
+
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []);
 
   const handleCartClick = () => {
     if (isAuthenticated) {

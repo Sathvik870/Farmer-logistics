@@ -4,7 +4,6 @@ import {
   registerForPushNotifications,
   unsubscribeFromPushNotifications,
 } from "../../utils/pushManager";
-import { useAlert } from "../../context/common/AlertContext";
 
 const ToggleSwitch: React.FC<{
   enabled: boolean;
@@ -27,10 +26,8 @@ const ToggleSwitch: React.FC<{
 
 const SettingsPage: React.FC = () => {
   const { settings, setSettings } = useSettings();
-  const { showAlert } = useAlert();
-
   const [isPushEnabled, setIsPushEnabled] = useState(false);
-  const [isPushLoading, setIsPushLoading] = useState(true);
+  const [isPushLoading, setIsPushLoading] = useState(false);
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -57,24 +54,18 @@ const SettingsPage: React.FC = () => {
     if (isPushEnabled) {
       const success = await unsubscribeFromPushNotifications("admin");
       if (success) {
-        showAlert("Push notifications disabled.", "success");
+        console.log("Push notifications disabled.");
         setIsPushEnabled(false);
       } else {
-        showAlert(
-          "Failed to disable notifications. Please try again or check browser settings.",
-          "error"
-        );
+        console.error("Failed to disable push notifications.");
       }
     } else {
       const success = await registerForPushNotifications("admin");
       if (success) {
-        showAlert("Push notifications enabled!", "success");
+        console.log("Push notifications enabled.");
         setIsPushEnabled(true);
       } else {
-        showAlert(
-          "Failed to enable notifications. You may need to grant permission.",
-          "warning"
-        );
+        console.error("Failed to enable push notifications.");
       }
     }
     setIsPushLoading(false);
